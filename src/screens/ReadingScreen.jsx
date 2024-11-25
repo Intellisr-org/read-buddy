@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, Modal, Image, TouchableOpacity, StyleSheet, PermissionsAndroid, Platform } from 'react-native';
-import { RNCamera } from 'react-native-camera';
 
 export default function ReadingScreen({ navigation }) {
   const [isModalVisible, setModalVisible] = useState(false);
@@ -9,33 +8,33 @@ export default function ReadingScreen({ navigation }) {
   const [cameraAuthorized, setCameraAuthorized] = useState(false);
 
   useEffect(() => {
-    const requestCameraPermission = async () => {
-      if (Platform.OS === 'android') {
-        const granted = await PermissionsAndroid.request(
-          PermissionsAndroid.PERMISSIONS.CAMERA,
-          {
-            title: 'Camera Permission',
-            message: 'This app needs access to your camera to take pictures.',
-            buttonNeutral: 'Ask Me Later',
-            buttonNegative: 'Cancel',
-            buttonPositive: 'OK',
-          },
-        );
-        setCameraAuthorized(granted === PermissionsAndroid.RESULTS.GRANTED);
-      } else {
-        setCameraAuthorized(true); // iOS permissions are handled automatically
-      }
-    };
+    // const requestCameraPermission = async () => {
+    //   if (Platform.OS === 'android') {
+    //     const granted = await PermissionsAndroid.request(
+    //       PermissionsAndroid.PERMISSIONS.CAMERA,
+    //       {
+    //         title: 'Camera Permission',
+    //         message: 'This app needs access to your camera to take pictures.',
+    //         buttonNeutral: 'Ask Me Later',
+    //         buttonNegative: 'Cancel',
+    //         buttonPositive: 'OK',
+    //       },
+    //     );
+    //     setCameraAuthorized(granted === PermissionsAndroid.RESULTS.GRANTED);
+    //   } else {
+    //     setCameraAuthorized(true); // iOS permissions are handled automatically
+    //   }
+    // };
 
-    requestCameraPermission();
+    // requestCameraPermission();
   }, []);
 
   const openCamera = async () => {
     if (cameraRef.current) {
-      const options = { quality: 0.5, base64: true };
-      const data = await cameraRef.current.takePictureAsync(options);
-      setPhoto({ uri: data.uri });
-      setModalVisible(true);
+    //   const options = { quality: 0.5, base64: true };
+    //   const data = await cameraRef.current.takePictureAsync(options);
+    //   setPhoto({ uri: data.uri });
+    //   setModalVisible(true);
     }
   };
 
@@ -45,14 +44,9 @@ export default function ReadingScreen({ navigation }) {
 
       <View style={styles.cameraContainer}>
         {cameraAuthorized ? (
-          <RNCamera
-            ref={cameraRef}
-            style={styles.camera}
-            type={RNCamera.Constants.Type.back}
-            captureAudio={false}
-          />
+        <Text>Camera ready</Text>
         ) : (
-          <Text>Camera not authorized</Text>
+        <Text>Camera not authorized</Text>
         )}
       </View>
 

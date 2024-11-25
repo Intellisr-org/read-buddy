@@ -45,9 +45,9 @@ const styles = StyleSheet.create({
     margin: 10,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#85fe78',
+    backgroundColor: '#27ac1f',
     borderRadius: 10,
   },
-  buttonText: { color: '#12181e', textAlign: 'center', fontSize: 28 },
+  buttonText: { color: '#12181e',fontWeight: 'bold',textAlign: 'center', fontSize: 28 },
   buttonTextIcon: { color: '#12181e', textAlign: 'center', fontSize: 40 },
 });
