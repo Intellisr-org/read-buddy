@@ -2,12 +2,6 @@
 import { StyleSheet, Text } from "react-native";
 import { Coordinate } from "../types/types";
 
-function getRandomFruitEmoji(): string {
-  const fruitEmojis = ["🍎", "🍊", "🍋", "🍇", "🍉", "🍓", "🍑", "🍍"];
-  const randomIndex = Math.floor(Math.random() * fruitEmojis.length);
-  return fruitEmojis[randomIndex];
-}
-
 interface FoodProps extends Coordinate {
   emoji: string;
 }

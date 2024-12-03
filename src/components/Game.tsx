@@ -21,11 +21,11 @@ const MOVE_INTERVAL = 200;
 const SCORE_INCREMENT = 10;
 
 // Calculate grid size based on screen dimensions
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
-const GRID_SIZE = Math.min(
-  Math.floor(SCREEN_WIDTH / GAME_BOUNDS.xMax),
-  Math.floor((SCREEN_HEIGHT - 100) / GAME_BOUNDS.yMax) // 100 for header and other UI elements
-);
+// const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
+// const GRID_SIZE = Math.min(
+//   Math.floor(SCREEN_WIDTH / GAME_BOUNDS.xMax),
+//   Math.floor((SCREEN_HEIGHT - 100) / GAME_BOUNDS.yMax) // 100 for header and other UI elements
+// );
 
 // Function to randomly select a fruit emoji from a list
 function getRandomFruitEmoji(): string {

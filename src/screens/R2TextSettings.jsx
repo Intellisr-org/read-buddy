@@ -38,7 +38,6 @@ export default function R2TextSettings({ navigation }) {
   const renderSentence = (sentence) => {
     return sentence.split('').map((char, index) => {
       const lowerChar = char;
-      const isUpperCase = char !== lowerChar;
       const settings =
         letterSettings[lowerChar] || {
           fontSize: 16,
@@ -49,10 +48,10 @@ export default function R2TextSettings({ navigation }) {
         <Text
           key={index}
           style={{
-            fontFamily:'OpenDyslexic',
-            fontSize: settings.fontSize,
+            fontFamily:'OpenDyslexic3-Regular',
+            fontSize: settings.fontSize, 
             color: settings.color,
-            fontWeight: settings.bold && isUpperCase ? 'bold' : 'normal',
+            fontWeight: settings.bold ? 'bold' : 'normal',
           }}
         >
           {char}
