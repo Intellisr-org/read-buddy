@@ -4,6 +4,7 @@ import * as React from 'react';
 import { View, Text } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import './utils/firebaseConfig';
 import DashboardScreen from './screens/Dashboard';
 import ReadingScreen from './screens/ReadingScreen';
 import WritingScreen from './screens/WritingScreen';
@@ -19,6 +20,9 @@ import SLevel1 from './screens/SLevel1';
 import SLevel2 from './screens/SLevel2';
 import SLevel3 from './screens/SLevel3';
 import SLevel4 from './screens/SLevel4';
+import ReadingText from './screens/ReadingText';
+import ReadingChallenge from './screens/ReadingChallenge';
+import LetterAnimation from './screens/LetterAnimation';
 
 function HomeScreen() {
   return (
@@ -35,20 +39,23 @@ function App() {
     <NavigationContainer>
       <Stack.Navigator>
         <Stack.Screen name="Home" component={DashboardScreen} />
-        <Stack.Screen name="Reading" component={R2TextSettings} />
+        <Stack.Screen name="Reading" component={ReadingScreen} />
         <Stack.Screen name="Writing" component={WritingScreen} />
         <Stack.Screen name="Speech" component={SpeechScreen} />
         <Stack.Screen name="Focus" component={FocusScreen} />
+        <Stack.Screen name="Text Reading" component={ReadingText} />
         <Stack.Screen name="Scanned Text" component={R1Scanned} />
         <Stack.Screen name="Text Settings" component={R2TextSettings} />
-        <Stack.Screen name="Writing Level 1" component={WLevel1} />
-        <Stack.Screen name="Writing Level 2" component={WLevel2} />
+        <Stack.Screen name="Reading Challenge" component={ReadingChallenge} />
+        <Stack.Screen name="Writing Letters" component={WLevel1} />
+        <Stack.Screen name="Writing Numbers" component={WLevel2} />
         <Stack.Screen name="Writing Level 3" component={WLevel3} />
         <Stack.Screen name="Writing Level 4" component={WLevel4} />
         <Stack.Screen name="Speech Level 1" component={SLevel1} />
         <Stack.Screen name="Speech Level 2" component={SLevel2} />
         <Stack.Screen name="Speech Level 3" component={SLevel3} />
         <Stack.Screen name="Speech Level 4" component={SLevel4} />
+        <Stack.Screen name="Say the word" component={LetterAnimation} />
       </Stack.Navigator>
     </NavigationContainer>
   );

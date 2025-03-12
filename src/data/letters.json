@@ -1,0 +1,210 @@
+[
+    {
+        "letter": "simple A",
+        "answer": "Letters/a.mp4"
+    },
+    {
+        "letter": "simple b",
+        "answer": "Letters/b.mp4"
+    },
+    {
+        "letter": "simple c",
+        "answer": "Letters/c.mp4"
+    },
+    {
+        "letter": "simple d",
+        "answer": "Letters/d.mp4"
+    },
+    {
+        "letter": "simple e",
+        "answer": "Letters/e.mp4"
+    },
+    {
+        "letter": "simple f",
+        "answer": "Letters/f.mp4"
+    },
+    {
+        "letter": "simple g",
+        "answer": "Letters/g.mp4"
+    },
+    {
+        "letter": "simple h",
+        "answer": "Letters/h.mp4"
+    },
+    {
+        "letter": "simple i",
+        "answer": "Letters/i.mp4"
+    },
+    {
+        "letter": "simple j",
+        "answer": "Letters/j.mp4"
+    },
+    {
+        "letter": "simple k",
+        "answer": "Letters/k.mp4"
+    },
+    {
+        "letter": "simple l",
+        "answer": "Letters/l.mp4"
+    },
+    {
+        "letter": "simple m",
+        "answer": "Letters/m.mp4"
+    },
+    {
+        "letter": "simple n",
+        "answer": "Letters/n.mp4"
+    },
+    {
+        "letter": "simple o",
+        "answer": "Letters/0.mp4"
+    },
+    {
+        "letter": "simple p",
+        "answer": "Letters/p.mp4"
+    },
+    {
+        "letter": "simple q",
+        "answer": "Letters/q.mp4"
+    },
+    {
+        "letter": "simple r",
+        "answer": "Letters/r.mp4"
+    },
+    {
+        "letter": "simple s",
+        "answer": "Letters/s.mp4"
+    },
+    {
+        "letter": "simple t",
+        "answer": "Letters/t.mp4"
+    },
+    {
+        "letter": "simple u",
+        "answer": "Letters/u.mp4"
+    },
+    {
+        "letter": "simple v",
+        "answer": "Letters/v.mp4"
+    },
+    {
+        "letter": "simple w",
+        "answer": "Letters/w.mp4"
+    },
+    {
+        "letter": "simple x",
+        "answer": "Letters/x.mp4"
+    },
+    {
+        "letter": "simple y",
+        "answer": "Letters/y.mp4"
+    },
+    {
+        "letter": "simple zed",
+        "answer": "Letters/z.mp4"
+    },
+    {
+        "letter": "capital A",
+        "answer": "Letters/A.mov"
+    },
+    {
+        "letter": "capital b",
+        "answer": "Letters/B.mov"
+    },
+    {
+        "letter": "capital c",
+        "answer": "Letters/C.mov"
+    },
+    {
+        "letter": "capital d",
+        "answer": "Letters/D.mov"
+    },
+    {
+        "letter": "capital e",
+        "answer": "Letters/E.mov"
+    },
+    {
+        "letter": "capital f",
+        "answer": "Letters/F.mov"
+    },
+    {
+        "letter": "capital g",
+        "answer": "Letters/G.mov"
+    },
+    {
+        "letter": "capital h",
+        "answer": "Letters/H.mov"
+    },
+    {
+        "letter": "capital i",
+        "answer": "Letters/I.mov"
+    },
+    {
+        "letter": "capital j",
+        "answer": "Letters/J.mov"
+    },
+    {
+        "letter": "capital k",
+        "answer": "Letters/K.mov"
+    },
+    {
+        "letter": "capital l",
+        "answer": "Letters/L.mov"
+    },
+    {
+        "letter": "capital m",
+        "answer": "Letters/M.mov"
+    },
+    {
+        "letter": "capital n",
+        "answer": "Letters/N.mov"
+    },
+    {
+        "letter": "capital o",
+        "answer": "Letters/O.mov"
+    },
+    {
+        "letter": "capital p",
+        "answer": "Letters/P.mov"
+    },
+    {
+        "letter": "capital q",
+        "answer": "Letters/Q.mov"
+    },
+    {
+        "letter": "capital r",
+        "answer": "Letters/R.mov"
+    },
+    {
+        "letter": "capital s",
+        "answer": "Letters/S.mov"
+    },
+    {
+        "letter": "capital t",
+        "answer": "Letters/T.mov"
+    },
+    {
+        "letter": "capital u",
+        "answer": "Letters/U.mov"
+    },
+    {
+        "letter": "capital v",
+        "answer": "Letters/V.mov"
+    },
+    {
+        "letter": "capital w",
+        "answer": "Letters/W.mov"
+    },
+    {
+        "letter": "capital x",
+        "answer": "Letters/X.mov"
+    },
+    {
+        "letter": "capital y",
+        "answer": "Letters/Y.mov"
+    },
+    {
+        "letter": "capital zed",
+        "answer": "Letters/Z.mov"
+    }
+]
