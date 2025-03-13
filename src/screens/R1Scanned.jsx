@@ -32,6 +32,7 @@ export default function R1Scanned({ navigation, route }) {
             <Text
               key={charIndex}
               style={{
+                fontFamily:'OpenDyslexic3-Regular',
                 fontSize: settings.fontSize,
                 color: settings.color,
                 fontWeight: settings.bold ? 'bold' : 'normal',

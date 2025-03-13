@@ -216,6 +216,7 @@ export default function R2TextSettings({ navigation, route }) {
         <Text
           key={index}
           style={{
+            fontFamily:'OpenDyslexic3-Regular',
             fontSize: settings.fontSize,
             color: settings.color,
             fontWeight: settings.bold ? 'bold' : 'normal',

@@ -39,7 +39,7 @@ export default function Game(): JSX.Element {
   const [rightFruitEmoji, setRightFruitEmoji] = useState<string>(getRandomFruitEmoji());
   const [fruitSpawnTime, setFruitSpawnTime] = useState<number>(Date.now());
   const [timeToReachFruit, setTimeToReachFruit] = useState<number[]>([]);
-  const [gameResult, setGameResult] = useState<{ result: string; message: string } | null>(null);
+  const [gameResult, setGameResult] = useState<{ result: string; message1: string; } | null>(null);
 
   const initializeWrongFruits = (count: number) => {
     const newWrongFruits: Coordinate[] = [];
@@ -215,13 +215,14 @@ export default function Game(): JSX.Element {
       if (result) {
         setGameResult({
           result: result.result,
-          message: result.message,
+          message1: result.message1,
+          // message2: result.message2,
         });
-        console.log(`Game Result: ${result.result}, Message: ${result.message}`);
+        console.log(`Game Result: ${result.result}, Message: ${result.message1}`);
       } else {
         setGameResult({
           result: "Unknown",
-          message: "No matching performance range found.",
+          message1: "No matching performance range found.",
         });
         console.log("No matching result found in game_result.json");
       }
@@ -261,7 +262,7 @@ export default function Game(): JSX.Element {
               {gameResult && (
                 <>
                   <Text style={styles.gameResultText}>Result: {gameResult.result}</Text>
-                  <Text style={styles.gameResultMessage}>{gameResult.message}</Text>
+                  <Text style={styles.gameResultMessage}>{gameResult.message1}</Text>
                 </>
               )}
               <Text style={styles.gameOverInstruction} onPress={reloadGame}>
