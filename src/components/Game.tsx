@@ -11,8 +11,9 @@ import Header from "./Header";
 import Score from "./Score";
 import Snake from "./Snake";
 import LevelSelection from "./LevelSelection";
-import firestore from '@react-native-firebase/firestore';
+import gameResults from '../data/game_result.json'; // Adjust path as needed
 
+// Constants for initial game setup
 const SNAKE_INITIAL_POSITION: Coordinate[] = [{ x: 5, y: 5 }];
 const FOOD_INITIAL_POSITION: Coordinate = { x: 5, y: 20 };
 const GAME_BOUNDS = { xMin: 0, xMax: 35, yMin: 0, yMax: 59 };
@@ -38,6 +39,7 @@ export default function Game(): JSX.Element {
   const [rightFruitEmoji, setRightFruitEmoji] = useState<string>(getRandomFruitEmoji());
   const [fruitSpawnTime, setFruitSpawnTime] = useState<number>(Date.now());
   const [timeToReachFruit, setTimeToReachFruit] = useState<number[]>([]);
+  const [gameResult, setGameResult] = useState<{ result: string; message: string } | null>(null);
 
   const initializeWrongFruits = (count: number) => {
     const newWrongFruits: Coordinate[] = [];
@@ -179,38 +181,52 @@ export default function Game(): JSX.Element {
     setRightFruitEmoji(getRandomFruitEmoji());
     setTimeToReachFruit([]);
     setFruitSpawnTime(Date.now());
+    setGameResult(null);
   };
 
   const pauseGame = () => {
     setIsPaused(!isPaused);
   };
 
+  // Determine game result based on average_speed and level
   useEffect(() => {
     if (isGameOver) {
       const averageSpeed = timeToReachFruit.length > 0 
         ? timeToReachFruit.reduce((a, b) => a + b, 0) / timeToReachFruit.length 
         : 0;
 
-      const gameData = {
-        level,
-        score,
-        average_speed: parseFloat(averageSpeed.toFixed(2)),
-        timestamp: firestore.FieldValue.serverTimestamp(),
-      };
+      console.log(`Level: ${level}, Average Speed: ${averageSpeed}`);
 
-      console.log('Attempting to save game data:', gameData);
+      let result;
+      if (averageSpeed === 0) {
+        // If no points scored (average_speed = 0), default to "Low" for the level
+        result = gameResults.find(record => 
+          record.level === level && record.result === "Low"
+        );
+      } else {
+        // Otherwise, find the matching range
+        result = gameResults.find(record => 
+          record.level === level && 
+          averageSpeed >= record.rangemin && 
+          averageSpeed <= record.rangemax
+        );
+      }
 
-      firestore()
-        .collection('snake_game_records')
-        .add(gameData)
-        .then(() => {
-          console.log('Game data successfully saved:', gameData);
-        })
-        .catch(error => {
-          console.error('Failed to save game data:', error);
+      if (result) {
+        setGameResult({
+          result: result.result,
+          message: result.message,
         });
+        console.log(`Game Result: ${result.result}, Message: ${result.message}`);
+      } else {
+        setGameResult({
+          result: "Unknown",
+          message: "No matching performance range found.",
+        });
+        console.log("No matching result found in game_result.json");
+      }
     }
-  }, [isGameOver, level, score, timeToReachFruit]);
+  }, [isGameOver]);
 
   if (!isLevelSelected) {
     return <LevelSelection onLevelSelect={handleLevelSelect} />;
@@ -242,6 +258,12 @@ export default function Game(): JSX.Element {
             <View style={styles.gameOverOverlay}>
               <Text style={styles.gameOverText}>Game Over</Text>
               <Text style={styles.gameOverScore}>Score: {score}</Text>
+              {gameResult && (
+                <>
+                  <Text style={styles.gameResultText}>Result: {gameResult.result}</Text>
+                  <Text style={styles.gameResultMessage}>{gameResult.message}</Text>
+                </>
+              )}
               <Text style={styles.gameOverInstruction} onPress={reloadGame}>
                 Tap to Restart
               </Text>
@@ -279,7 +301,7 @@ const styles = StyleSheet.create({
   },
   gameOverOverlay: {
     position: "absolute",
-    top: "40%",
+    top: "30%",
     left: "10%",
     right: "10%",
     backgroundColor: "rgba(0,0,0,0.7)",
@@ -295,6 +317,17 @@ const styles = StyleSheet.create({
   gameOverScore: {
     fontSize: 24,
     color: "#fff",
+    marginBottom: 10,
+  },
+  gameResultText: {
+    fontSize: 20,
+    color: "#85fe78",
+    marginBottom: 10,
+  },
+  gameResultMessage: {
+    fontSize: 16,
+    color: "#fff",
+    textAlign: "center",
     marginBottom: 20,
   },
   gameOverInstruction: {
