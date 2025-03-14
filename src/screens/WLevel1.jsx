@@ -1,30 +1,64 @@
 import storage from '@react-native-firebase/storage';
-import React, { useRef, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, Alert, ActivityIndicator } from 'react-native';
+import React, { useRef, useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Image,
+  Alert,
+  ActivityIndicator,
+} from 'react-native';
 import SignatureScreen from 'react-native-signature-canvas';
 import Tts from 'react-native-tts';
 import Video from 'react-native-video';
-import lettersData from '../data/letters.json'
+import writingWordsData from '../data/writing_words.json';
+import lettersData from '../data/letters.json';
 
-export default function WLevel1({ navigation }) {
+export default function WLevel1({ navigation, route }) {
   const signatureRef = useRef(null);
-
-  // assign the model result here
-  const [modelResul, setModelResul] = useState(false);
-  const [currentNum, setCurrentNum] = useState(null);
+  const level = route.params?.level || 1;
+  const [modelResult, setModelResult] = useState([]);
+  const [currentWord, setCurrentWord] = useState(null);
+  const [previousWord, setPreviousWord] = useState(null);
+  const [currentLetterIndex, setCurrentLetterIndex] = useState(0);
   const [videoUrl, setVideoUrl] = useState(null);
-  const [loading, setLoading] = useState(false); // New loading state
+  const [loading, setLoading] = useState(false);
+  const [videoQueue, setVideoQueue] = useState([]);
+
+  const levelWords = writingWordsData.filter((word) => word.level === String(level));
+
+  useEffect(() => {
+    selectRandomWord();
+  }, [level]);
+
+  const capitalizeFirstLetter = (word) => {
+    if (!word) return '';
+    return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+  };
+
+  const selectRandomWord = () => {
+    let newWord;
+    do {
+      const randomIndex = Math.floor(Math.random() * levelWords.length);
+      newWord = levelWords[randomIndex];
+    } while (newWord === previousWord && levelWords.length > 1);
+    setPreviousWord(currentWord);
+    setCurrentWord({ ...newWord, word: capitalizeFirstLetter(newWord.word) });
+    setCurrentLetterIndex(0);
+    setModelResult([]);
+    setVideoUrl(null);
+    setVideoQueue([]);
+  };
 
   const playAudio = () => {
     try {
-      const randomIndex = Math.floor(Math.random() * lettersData.length);
-      const selectedNum = lettersData[randomIndex];
-      setCurrentNum(selectedNum);
-
-      Tts.setDefaultLanguage('en-US');
-      Tts.setDefaultRate(0.3);
-      Tts.speak(selectedNum.letter);
-      console.log(`TTS: Speaking "${selectedNum.letter}"`);
+      if (currentWord) {
+        Tts.setDefaultLanguage('en-US');
+        Tts.setDefaultRate(0.3);
+        Tts.speak(currentWord.word);
+        console.log(`TTS: Speaking "${currentWord.word}"`);
+      }
     } catch (e) {
       console.log('Error with TTS:', e);
       Alert.alert('Error', 'Failed to speak');
@@ -41,10 +75,20 @@ export default function WLevel1({ navigation }) {
     }
   };
 
-  const submitCanvas = () => {
+  const nextLetter = () => {
+    console.log('Next button pressed');
+    if (signatureRef.current) {
+      setLoading(true);
+      signatureRef.current.readSignature();
+    } else {
+      console.log('Signature ref is not ready');
+    }
+  };
+
+  const submitWord = () => {
     console.log('Submit button pressed');
     if (signatureRef.current) {
-      setLoading(true); // Start loading
+      setLoading(true);
       signatureRef.current.readSignature();
     } else {
       console.log('Signature ref is not ready');
@@ -56,37 +100,85 @@ export default function WLevel1({ navigation }) {
       if (!base64Data || base64Data.length < 50) {
         console.log('Invalid or empty base64 data:', base64Data);
         Alert.alert('Error', 'Please draw something before submitting');
-        setLoading(false); // Stop loading on error
+        setLoading(false);
         return;
       }
-      console.log('Base64 Data:', base64Data.substring(0, 50) + '...');
       const base64String = base64Data.replace(/^data:image\/\w+;base64,/, '');
-      console.log('Processed Base64:', base64String.substring(0, 50) + '...');
-
-      const storageRef = storage().ref('screenshots/my-screenshot.jpg');
-      console.log('Uploading to:', storageRef.fullPath);
+      const storageRef = storage().ref(`screenshots/img_${currentLetterIndex}.jpg`);
       await storageRef.putString(base64String, 'base64', { contentType: 'image/jpeg' });
-      console.log('Upload complete');
-      // Alert.alert('Success', 'Signature uploaded to Firebase');
+      console.log(`Uploaded img_${currentLetterIndex}.jpg`);
 
       clearCanvas();
 
-      if (modelResul === false && currentNum) {
-        const videoRef = storage().ref(currentNum.answer);
-        const url = await videoRef.getDownloadURL();
-        console.log('Video URL fetched:', url);
-        setVideoUrl(url);
-        setLoading(false); // Stop loading when video is ready
-      } else if (modelResul === true) {
-        Alert.alert('Success', 'Your Answer is correct');
-        setLoading(false); // Stop loading after alert
-        // playAudio();
+      if (currentLetterIndex < currentWord.word.length - 1) {
+        setCurrentLetterIndex(currentLetterIndex + 1);
+        setLoading(false);
+      } else {
+        const simulatedResult = Array(currentWord.word.length)
+          .fill(null)
+          .map(() => Math.random() > 0.5); // Simulate ML result
+        setModelResult(simulatedResult);
+        setLoading(false);
+
+        if (simulatedResult.every((res) => res === true)) {
+          Alert.alert('Success', 'All letters are correct!', [
+            { text: 'Next Word', onPress: selectRandomWord },
+          ]);
+        } else {
+          const incorrectIndices = simulatedResult
+            .map((res, idx) => (res === false ? idx : null))
+            .filter((idx) => idx !== null);
+          const videosToPlay = incorrectIndices.map((idx) => {
+            const letter = currentWord.word[idx]; // Use exact case from word
+            const letterData = lettersData.find((l) => l.letter === letter);
+            return letterData ? letterData.answer : null;
+          }).filter(Boolean);
+          setVideoQueue(videosToPlay);
+          loadFirstVideo(videosToPlay);
+        }
       }
     } catch (error) {
       console.error('Error uploading signature:', error);
       Alert.alert('Error', 'Failed to upload signature');
-      setLoading(false); // Stop loading on error
+      setLoading(false);
     }
+  };
+
+  const loadFirstVideo = async (queue) => {
+    if (queue.length > 0) {
+      const videoPath = queue[0];
+      try {
+        const videoRef = storage().ref(videoPath);
+        const url = await videoRef.getDownloadURL();
+        setVideoUrl(url);
+      } catch (error) {
+        console.error('Error fetching video:', error);
+        Alert.alert('Error', 'Failed to fetch video');
+        setVideoQueue(queue.slice(1));
+        loadFirstVideo(queue.slice(1));
+      }
+    }
+  };
+
+  const nextVideo = () => {
+    if (videoQueue.length > 0) {
+      const nextQueue = videoQueue.slice(1);
+      setVideoQueue(nextQueue);
+      if (nextQueue.length > 0) {
+        loadFirstVideo(nextQueue);
+      } else {
+        setVideoUrl(null);
+        selectRandomWord();
+      }
+    }
+  };
+
+  const getOrdinal = (index) => {
+    const n = index + 1;
+    if (n % 10 === 1 && n % 100 !== 11) return `${n}st`;
+    if (n % 10 === 2 && n % 100 !== 12) return `${n}nd`;
+    if (n % 10 === 3 && n % 100 !== 13) return `${n}rd`;
+    return `${n}th`;
   };
 
   const webStyle = `
@@ -97,61 +189,73 @@ export default function WLevel1({ navigation }) {
 
   return (
     <View style={styles.container}>
-      {!videoUrl && <View style={styles.insContainer}>
-        <View>
-          <Text style={styles.insTxt}>Click here to Listen the</Text>
-          <Text style={styles.insTxt}>Letter & write it below : </Text>
+      {!videoUrl && (
+        <View style={styles.insContainer}>
+          <View>
+            <Text style={styles.insTxt}>
+              {/* Write the {getOrdinal(currentLetterIndex)} letter of "{currentWord?.word}" */}
+              Write the {getOrdinal(currentLetterIndex)} letter"
+            </Text>
+          </View>
+          <TouchableOpacity onPress={playAudio}>
+            <Text style={styles.speakBtnTxt}>
+              <Image source={require('../assets/speaker0.png')} style={styles.speakBtnIcon} />
+            </Text>
+          </TouchableOpacity>
         </View>
-        <TouchableOpacity onPress={playAudio}>
-          <Text style={styles.speakBtnTxt}>
-            <Image source={require('../assets/speaker0.png')} style={styles.speakBtnIcon} />
-          </Text>
-        </TouchableOpacity>
-      </View>}
+      )}
 
-      {!videoUrl && <View style={styles.canvasContainer}>
-        <SignatureScreen
-          ref={signatureRef}
-          webStyle={webStyle}
-          onOK={uploadSignature}
-          onEmpty={() => console.log('Signature is empty')}
-          onBegin={() => console.log('Drawing started')}
-          onEnd={() => console.log('Drawing ended')}
-        />
-      </View>}
+      {!videoUrl && (
+        <View style={styles.canvasContainer}>
+          <SignatureScreen
+            ref={signatureRef}
+            webStyle={webStyle}
+            onOK={uploadSignature}
+            onEmpty={() => console.log('Signature is empty')}
+            onBegin={() => console.log('Drawing started')}
+            onEnd={() => console.log('Drawing ended')}
+          />
+        </View>
+      )}
 
       {videoUrl && (
         <View style={styles.videoContainer}>
-          <Text style={styles.videoTxt}>Nice Try! Here is the correct answer</Text>
+          <Text style={styles.videoTxt}>Nice Try! Here is the correct way to write it</Text>
           <Video
             source={{ uri: videoUrl }}
             style={styles.video}
             controls={true}
             resizeMode="contain"
             onLoad={() => console.log('Video loaded')}
-            onEnd={() => {
-              console.log('Video ended');
-              setVideoUrl(null);
-            }}
             onError={(e) => {
               console.log('Video error:', e.error);
               Alert.alert('Error', 'Failed to play video');
-              setVideoUrl(null);
+              nextVideo();
             }}
           />
+          <TouchableOpacity onPress={nextVideo} style={styles.nextVideoBtn}>
+            <Text style={styles.nextVideoBtnText}>Next</Text>
+          </TouchableOpacity>
         </View>
       )}
 
-      {!videoUrl && <View style={styles.fixToText}>
-        <TouchableOpacity onPress={submitCanvas} disabled={loading}>
-          <Text style={styles.positiveBtn}>Submit</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={clearCanvas} disabled={loading}>
-          <Text style={styles.negativeBtn}>Clear</Text>
-        </TouchableOpacity>
-      </View>}
+      {!videoUrl && (
+        <View style={styles.fixToText}>
+          {currentLetterIndex < (currentWord?.word.length - 1 || 0) ? (
+            <TouchableOpacity onPress={nextLetter} disabled={loading}>
+              <Text style={styles.positiveBtn}>Next</Text>
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity onPress={submitWord} disabled={loading}>
+              <Text style={styles.positiveBtn}>Submit</Text>
+            </TouchableOpacity>
+          )}
+          <TouchableOpacity onPress={clearCanvas} disabled={loading}>
+            <Text style={styles.negativeBtn}>Clear</Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
-      {/* Loading Overlay */}
       {loading && (
         <View style={styles.loadingOverlay}>
           <ActivityIndicator size="large" color="#27ac1f" />
@@ -167,7 +271,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     backgroundColor: '#fff',
-    justifyContent:'center',
+    justifyContent: 'center',
   },
   insContainer: {
     flexDirection: 'row',
@@ -211,16 +315,30 @@ const styles = StyleSheet.create({
     height: 400,
     backgroundColor: '#000',
     marginBottom: 10,
+    alignItems: 'center',
   },
   video: {
     width: '100%',
-    height: '100%',
+    height: '80%',
   },
   videoTxt: {
     fontSize: 23,
     fontWeight: '600',
     color: '#27ac1f',
-    textAlign: 'center'
+    textAlign: 'center',
+    marginBottom: 10,
+  },
+  nextVideoBtn: {
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    backgroundColor: '#85fe78',
+    borderRadius: 10,
+    marginTop: 10,
+  },
+  nextVideoBtnText: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#12181e',
   },
   fixToText: {
     flexDirection: 'row',
@@ -248,11 +366,11 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   loadingOverlay: {
-    ...StyleSheet.absoluteFillObject, // Cover the entire screen
-    backgroundColor: 'rgba(0, 0, 0, 0.5)', // Semi-transparent gray
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
-    zIndex: 10, // Ensure it’s on top
+    zIndex: 10,
   },
   loadingText: {
     color: '#fff',

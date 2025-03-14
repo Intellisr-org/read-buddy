@@ -10,9 +10,9 @@ export default function WritingScreen({ navigation }) {
         <Text style={styles.title}>Let's Write</Text>
       </View>
       <View style={styles.buttonsContainer}>
-        <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Writing Letters')}>
+        <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Words')}>
           {/* <Text style={styles.buttonTextIcon}>1</Text> */}
-          <Text style={styles.buttonText}>Letters</Text>
+          <Text style={styles.buttonText}>Words</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Writing Numbers')}>
           {/* <Text style={styles.buttonTextIcon}>2</Text> */}

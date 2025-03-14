@@ -1,210 +1,210 @@
 [
     {
-        "letter": "simple A",
+        "letter": "a",
         "answer": "Letters/a.mp4"
     },
     {
-        "letter": "simple b",
+        "letter": "b",
         "answer": "Letters/b.mp4"
     },
     {
-        "letter": "simple c",
+        "letter": "c",
         "answer": "Letters/c.mp4"
     },
     {
-        "letter": "simple d",
+        "letter": "d",
         "answer": "Letters/d.mp4"
     },
     {
-        "letter": "simple e",
+        "letter": "e",
         "answer": "Letters/e.mp4"
     },
     {
-        "letter": "simple f",
+        "letter": "f",
         "answer": "Letters/f.mp4"
     },
     {
-        "letter": "simple g",
+        "letter": "g",
         "answer": "Letters/g.mp4"
     },
     {
-        "letter": "simple h",
+        "letter": "h",
         "answer": "Letters/h.mp4"
     },
     {
-        "letter": "simple i",
+        "letter": "i",
         "answer": "Letters/i.mp4"
     },
     {
-        "letter": "simple j",
+        "letter": "j",
         "answer": "Letters/j.mp4"
     },
     {
-        "letter": "simple k",
+        "letter": "k",
         "answer": "Letters/k.mp4"
     },
     {
-        "letter": "simple l",
+        "letter": "l",
         "answer": "Letters/l.mp4"
     },
     {
-        "letter": "simple m",
+        "letter": "m",
         "answer": "Letters/m.mp4"
     },
     {
-        "letter": "simple n",
+        "letter": "n",
         "answer": "Letters/n.mp4"
     },
     {
-        "letter": "simple o",
+        "letter": "o",
         "answer": "Letters/0.mp4"
     },
     {
-        "letter": "simple p",
+        "letter": "p",
         "answer": "Letters/p.mp4"
     },
     {
-        "letter": "simple q",
+        "letter": "q",
         "answer": "Letters/q.mp4"
     },
     {
-        "letter": "simple r",
+        "letter": "r",
         "answer": "Letters/r.mp4"
     },
     {
-        "letter": "simple s",
+        "letter": "s",
         "answer": "Letters/s.mp4"
     },
     {
-        "letter": "simple t",
+        "letter": "t",
         "answer": "Letters/t.mp4"
     },
     {
-        "letter": "simple u",
+        "letter": "u",
         "answer": "Letters/u.mp4"
     },
     {
-        "letter": "simple v",
+        "letter": "v",
         "answer": "Letters/v.mp4"
     },
     {
-        "letter": "simple w",
+        "letter": "w",
         "answer": "Letters/w.mp4"
     },
     {
-        "letter": "simple x",
+        "letter": "x",
         "answer": "Letters/x.mp4"
     },
     {
-        "letter": "simple y",
+        "letter": "y",
         "answer": "Letters/y.mp4"
     },
     {
-        "letter": "simple zed",
+        "letter": "z",
         "answer": "Letters/z.mp4"
     },
     {
-        "letter": "capital A",
+        "letter": "A",
         "answer": "Letters/A.mov"
     },
     {
-        "letter": "capital b",
+        "letter": "B",
         "answer": "Letters/B.mov"
     },
     {
-        "letter": "capital c",
+        "letter": "C",
         "answer": "Letters/C.mov"
     },
     {
-        "letter": "capital d",
+        "letter": "D",
         "answer": "Letters/D.mov"
     },
     {
-        "letter": "capital e",
+        "letter": "E",
         "answer": "Letters/E.mov"
     },
     {
-        "letter": "capital f",
+        "letter": "F",
         "answer": "Letters/F.mov"
     },
     {
-        "letter": "capital g",
+        "letter": "G",
         "answer": "Letters/G.mov"
     },
     {
-        "letter": "capital h",
+        "letter": "H",
         "answer": "Letters/H.mov"
     },
     {
-        "letter": "capital i",
+        "letter": "I",
         "answer": "Letters/I.mov"
     },
     {
-        "letter": "capital j",
+        "letter": "J",
         "answer": "Letters/J.mov"
     },
     {
-        "letter": "capital k",
+        "letter": "K",
         "answer": "Letters/K.mov"
     },
     {
-        "letter": "capital l",
+        "letter": "L",
         "answer": "Letters/L.mov"
     },
     {
-        "letter": "capital m",
+        "letter": "M",
         "answer": "Letters/M.mov"
     },
     {
-        "letter": "capital n",
+        "letter": "N",
         "answer": "Letters/N.mov"
     },
     {
-        "letter": "capital o",
+        "letter": "O",
         "answer": "Letters/O.mov"
     },
     {
-        "letter": "capital p",
+        "letter": "P",
         "answer": "Letters/P.mov"
     },
     {
-        "letter": "capital q",
+        "letter": "Q",
         "answer": "Letters/Q.mov"
     },
     {
-        "letter": "capital r",
+        "letter": "R",
         "answer": "Letters/R.mov"
     },
     {
-        "letter": "capital s",
+        "letter": "S",
         "answer": "Letters/S.mov"
     },
     {
-        "letter": "capital t",
+        "letter": "T",
         "answer": "Letters/T.mov"
     },
     {
-        "letter": "capital u",
+        "letter": "U",
         "answer": "Letters/U.mov"
     },
     {
-        "letter": "capital v",
+        "letter": "V",
         "answer": "Letters/V.mov"
     },
     {
-        "letter": "capital w",
+        "letter": "W",
         "answer": "Letters/W.mov"
     },
     {
-        "letter": "capital x",
+        "letter": "X",
         "answer": "Letters/X.mov"
     },
     {
-        "letter": "capital y",
+        "letter": "Y",
         "answer": "Letters/Y.mov"
     },
     {
-        "letter": "capital zed",
+        "letter": "Z",
         "answer": "Letters/Z.mov"
     }
 ]

@@ -25,6 +25,7 @@ import ReadingChallenge from './screens/ReadingChallenge';
 import LetterAnimation from './screens/LetterAnimation';
 import GameOverScreen from './components/GameOverScreen';
 import Game from './components/Game';
+import WordWrite from './screens/WordsWrite';
 
 // Define navigation param lists
 export type RootStackParamList = {
@@ -70,6 +71,7 @@ export type RootStackParamList = {
     };
   };
   Game: undefined;
+  Words: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -267,7 +269,7 @@ function App() {
               <Stack.Screen name="Speech Level 4" component={SLevel4} />
               <Stack.Screen name="Say the word" component={LetterAnimation} />
               <Stack.Screen name="Game" component={Game} />
-              {/* <Stack.Screen name="GameOver" component={GameOverScreen} /> */}
+              <Stack.Screen name="Words" component={WordWrite} />
             </>
           ) : (
             <>
@@ -309,6 +311,7 @@ const styles = StyleSheet.create({
     borderColor: '#ccc',
     borderRadius: 5,
     marginBottom: 15,
+    color:'#000'
   },
   button: {
     backgroundColor: '#007AFF',
