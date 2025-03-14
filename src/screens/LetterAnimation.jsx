@@ -1,5 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Animated, Dimensions, Alert, Platform, PermissionsAndroid } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Animated,
+  Dimensions,
+  Alert,
+  Platform,
+  PermissionsAndroid,
+  Image,
+} from 'react-native';
 import words from '../data/speach_words.json';
 import AudioRecorderPlayer from 'react-native-audio-recorder-player';
 import Sound from 'react-native-sound';
@@ -7,15 +18,19 @@ import storage from '@react-native-firebase/storage';
 
 const audioRecorderPlayer = new AudioRecorderPlayer();
 
-export default function LetterAnimation({ navigation }) {
+export default function LetterAnimation({ navigation, route }) {
+  const level = route.params?.level || 1; // Default to level 1 if no param
   const [animationStep, setAnimationStep] = useState(1);
   const [status, setStatus] = useState('Say the word you see!');
   const [isAnimating, setIsAnimating] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
-  const [countdown, setCountdown] = useState(5); // Reduced to 5 seconds
+  const [countdown, setCountdown] = useState(5);
   const [modelResult, setModelResult] = useState(null);
-  const [currentWordIndex, setCurrentWordIndex] = useState(null);
+  const [currentWordIndex, setCurrentWordIndex] = useState(0);
+  const [wordResults, setWordResults] = useState([]); // Track results for all words
+  const [imageUrl, setImageUrl] = useState(null);
 
+  const levelWords = words.filter((word) => word.level === level);
   const MAX_LETTERS = 10;
   const letterAnimations = useRef(
     Array(MAX_LETTERS)
@@ -24,10 +39,11 @@ export default function LetterAnimation({ navigation }) {
   ).current;
 
   useEffect(() => {
-    selectRandomWord();
-  }, []);
+    resetForNewWord(0);
+    loadImage(0);
+  }, [level]);
 
-  const selectedWord = currentWordIndex !== null ? words[currentWordIndex] : words[8];
+  const selectedWord = levelWords[currentWordIndex] || levelWords[0];
   const letterGroups = selectedWord.letterGroups;
   const word = selectedWord.word;
   const letterColors = selectedWord.letterColors;
@@ -44,14 +60,24 @@ export default function LetterAnimation({ navigation }) {
     });
   }, [currentWordIndex]);
 
-  const selectRandomWord = () => {
-    const randomIndex = Math.floor(Math.random() * words.length);
-    setCurrentWordIndex(randomIndex);
+  const loadImage = async (index) => {
+    try {
+      const imageRef = storage().ref(levelWords[index].image);
+      const url = await imageRef.getDownloadURL();
+      setImageUrl(url);
+    } catch (error) {
+      console.error('Error loading image:', error);
+      setImageUrl(null);
+    }
+  };
+
+  const resetForNewWord = (index) => {
+    setCurrentWordIndex(index);
     setAnimationStep(1);
     setIsAnimating(false);
     setModelResult(null);
     setStatus('Say the word you see!');
-    setCountdown(5); // Reset to 5 seconds
+    setCountdown(5);
   };
 
   const startAnimation = () => {
@@ -122,13 +148,13 @@ export default function LetterAnimation({ navigation }) {
 
     setIsRecording(true);
     setStatus('Recording...');
-    setCountdown(5); // Start countdown at 5 seconds
+    setCountdown(5);
 
     try {
       const uri = await audioRecorderPlayer.startRecorder();
       console.log('Recording started at:', uri);
 
-      let timeLeft = 5; // Reduced to 5 seconds
+      let timeLeft = 5;
       const countdownInterval = setInterval(() => {
         timeLeft -= 1;
         setCountdown(timeLeft);
@@ -151,14 +177,15 @@ export default function LetterAnimation({ navigation }) {
       setIsRecording(false);
       setStatus('Uploading audio...');
 
-      // Upload to Firebase Storage with fixed name "audio.mp3"
       const reference = storage().ref(`speechrecord/audio.mp3`);
       await reference.putFile(uri);
       const downloadURL = await reference.getDownloadURL();
       console.log('Uploaded to Firebase:', downloadURL);
 
-      const simulatedModelResult = Math.random() > 0.5; // Replace with real model
+      // Simulate model result (replace with real model later)
+      const simulatedModelResult = Math.random() > 0.5;
       setModelResult(simulatedModelResult);
+      setWordResults((prev) => [...prev.slice(0, currentWordIndex), simulatedModelResult]);
 
       if (simulatedModelResult) {
         Alert.alert('Success', 'Your Answer is correct');
@@ -200,6 +227,40 @@ export default function LetterAnimation({ navigation }) {
     await playCorrectAudio();
   };
 
+  const goToNextWord = () => {
+    if (currentWordIndex + 1 < levelWords.length) {
+      const nextIndex = currentWordIndex + 1;
+      resetForNewWord(nextIndex);
+      loadImage(nextIndex);
+    } else {
+      // Level completed, check results
+      const allCorrect = wordResults.every((result) => result === true);
+      if (allCorrect) {
+        Alert.alert(
+          'Congratulations!',
+          'All the Answers are Correct!',
+          [{ text: 'Back to Levels', onPress: () => navigation.goBack() }]
+        );
+      } else {
+        Alert.alert(
+          'Keep Going!',
+          'Some answers were incorrect. Try this level again to improve!',
+          [
+            { text: 'Try Again', onPress: () => resetLevel() },
+            { text: 'Back to Levels', onPress: () => navigation.goBack() },
+          ]
+        );
+      }
+    }
+  };
+
+  const resetLevel = () => {
+    setCurrentWordIndex(0);
+    setWordResults([]);
+    resetForNewWord(0);
+    loadImage(0);
+  };
+
   const renderInitialWord = () => (
     <View style={styles.dividedLettersInit}>
       <Text style={[styles.letter, { fontSize, color: '#000' }]}>{word}</Text>
@@ -225,29 +286,30 @@ export default function LetterAnimation({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>Speaking Challange</Text>
+      <Text style={styles.header}>Speaking Challenge - Level {level}</Text>
       <View style={styles.instructions}>
         <Text style={styles.instructionsText}>🎓 Say the word "{word}"!</Text>
       </View>
 
       <View style={styles.animationContainer}>
+        {imageUrl && (
+          <Image source={{ uri: imageUrl }} style={styles.image} resizeMode="contain" />
+        )}
         {animationStep === 1 && renderInitialWord()}
         {animationStep === 2 && renderAnimatedLetters()}
       </View>
 
       <View style={styles.maincontrols}>
         <TouchableOpacity
-            style={[styles.speakButton, isRecording && styles.buttonDisabled]}
-            onPress={startRecording}
-            disabled={isRecording}
-          >
-            <Text style={styles.buttonText}>Speak</Text>
-          </TouchableOpacity>
+          style={[styles.speakButton, isRecording && styles.buttonDisabled]}
+          onPress={startRecording}
+          disabled={isRecording}
+        >
+          <Text style={styles.buttonText}>Speak</Text>
+        </TouchableOpacity>
       </View>
 
       <View style={styles.controls}>
-
-     
         <TouchableOpacity
           style={[styles.button, (isAnimating || modelResult === null) && styles.buttonDisabled]}
           onPress={startAnimation}
@@ -262,8 +324,6 @@ export default function LetterAnimation({ navigation }) {
         >
           <Text style={styles.buttonText}>Reset</Text>
         </TouchableOpacity>
-        
-        
 
         {modelResult === false && (
           <TouchableOpacity style={styles.button} onPress={replayAudio}>
@@ -272,12 +332,10 @@ export default function LetterAnimation({ navigation }) {
         )}
 
         {modelResult !== null && (
-          <TouchableOpacity style={styles.speakButton} onPress={selectRandomWord}>
+          <TouchableOpacity style={styles.speakButton} onPress={goToNextWord}>
             <Text style={styles.buttonText}>Next</Text>
           </TouchableOpacity>
-          
         )}
-        
       </View>
 
       <Text style={styles.status}>
@@ -330,21 +388,28 @@ const styles = StyleSheet.create({
     shadowRadius: 16,
     elevation: 8,
     justifyContent: 'center',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     marginBottom: 20,
     overflow: 'hidden',
+    position: 'relative',
+  },
+  image: {
+    width: '80%',
+    height: 150,
+    position: 'absolute',
+    top: 10,
   },
   dividedLetters: {
     flexDirection: 'row',
     position: 'absolute',
-    top: 150,
+    top: 200,
     left: 0,
     width: '100%',
   },
   dividedLettersInit: {
     flexDirection: 'row',
     position: 'absolute',
-    top: 150,
+    top: 200,
     left: 80,
     width: '100%',
   },

@@ -39,11 +39,11 @@ export default function GameOverScreen({ score, result, onRestart }: GameOverScr
   return (
     <View style={styles.outerContainer}>
 
-        <Text style={styles.header}>Game Over</Text>
-        <Text style={styles.score}>Score: {score}</Text>
+      <ScrollView contentContainerStyle={styles.scrolContainer}>
+        {/* <Text style={styles.header}>Game Over</Text> */}
+        <Text style={styles.header}>Score: {score}</Text>
         <Text style={styles.result}>Result: {result.result}</Text>
         <Text style={styles.description}>{result.description}</Text>
-      <ScrollView contentContainerStyle={styles.scrolContainer}>
 
         <View style={styles.suggestionsContainer}>
           <Text style={styles.suggestionsHeader}>Suggestions for Improvement:</Text>
@@ -55,10 +55,10 @@ export default function GameOverScreen({ score, result, onRestart }: GameOverScr
           ))}
         </View>
 
-      </ScrollView>
         <TouchableOpacity style={styles.restartButton} onPress={onRestart}>
           <Text style={styles.restartText}>Restart Game</Text>
         </TouchableOpacity>
+      </ScrollView>
     </View>
   );
 }
@@ -85,7 +85,7 @@ const styles = StyleSheet.create({
     fontSize: 32,
     fontWeight: 'bold',
     color: '#fff',
-    marginBottom: 20,
+    marginBottom: 10,
   },
   score: {
     fontSize: 24,
@@ -106,7 +106,7 @@ const styles = StyleSheet.create({
   },
   suggestionsContainer: {
     width: '100%',
-    marginBottom: 20,
+    marginBottom: 1,
   },
   suggestionsHeader: {
     fontSize: 22,
