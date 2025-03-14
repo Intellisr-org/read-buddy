@@ -1,20 +1,42 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import firestore from '@react-native-firebase/firestore';
+import { AppContext } from '../App.tsx';
 
 export default function R1Scanned({ navigation, route }) {
   const scannedText = route.params?.scannedText || 'No text scanned yet';
   const [letterSettings, setLetterSettings] = useState({});
+  const { loggedInUser } = useContext(AppContext);
 
   useEffect(() => {
+    const loadSettingsFromFirestore = async () => {
+      if (!loggedInUser) return;
+      try {
+        const userDoc = await firestore()
+          .collection('snake_game_leadersboard')
+          .doc(loggedInUser)
+          .get();
+        if (userDoc.exists) {
+          const data = userDoc.data();
+          if (data.textSettings) {
+            setLetterSettings(data.textSettings);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading settings:', error);
+      }
+    };
+
+    loadSettingsFromFirestore();
+
     const unsubscribe = navigation.addListener('focus', () => {
       const updatedSettings = route.params?.letterSettings;
       if (updatedSettings) {
         setLetterSettings(updatedSettings);
-        console.log('Updated letterSettings:', updatedSettings);
       }
     });
     return unsubscribe;
-  }, [navigation, route.params]);
+  }, [navigation, route.params, loggedInUser]);
 
   // Render a line with per-character styling, preserving whole words
   const renderLine = (line) => {
@@ -32,7 +54,7 @@ export default function R1Scanned({ navigation, route }) {
             <Text
               key={charIndex}
               style={{
-                fontFamily:'OpenDyslexic3-Regular',
+                fontFamily: 'OpenDyslexic3-Regular',
                 fontSize: settings.fontSize,
                 color: settings.color,
                 fontWeight: settings.bold ? 'bold' : 'normal',
@@ -42,7 +64,7 @@ export default function R1Scanned({ navigation, route }) {
             </Text>
           );
         })}
-        {wordIndex < words.length - 1 && <Text> </Text>} {/* Add space between words */}
+        {wordIndex < words.length - 1 && <Text> </Text>}
       </Text>
     ));
   };
@@ -58,17 +80,17 @@ export default function R1Scanned({ navigation, route }) {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={styles.outerContainer}>
       <ScrollView
         style={styles.scrollView}
-        contentContainerStyle={styles.textContainer}
+        contentContainerStyle={styles.contentContainer} // Adjusted for centering
       >
-        {renderLines(scannedText)}
+        <View style={styles.textWrapper}>
+          {renderLines(scannedText)}
+        </View>
       </ScrollView>
       <TouchableOpacity
-        onPress={() =>
-          navigation.navigate('Text Settings', { scannedText, letterSettings })
-        }
+        onPress={() => navigation.navigate('Text Settings', { scannedText, letterSettings })}
       >
         <Text style={styles.positiveBtn}>Text Settings</Text>
       </TouchableOpacity>
@@ -77,25 +99,31 @@ export default function R1Scanned({ navigation, route }) {
 }
 
 const styles = StyleSheet.create({
-  container: {
+  outerContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: 'center', // Center vertically within the screen
+    alignItems: 'center', // Center horizontally within the screen
   },
   scrollView: {
     width: '100%',
+    flexGrow: 1, // Allow ScrollView to grow within the container
   },
-  textContainer: {
+  contentContainer: {
+    flexGrow: 1, // Ensure content can grow to fill ScrollView
+    justifyContent: 'center', // Center content vertically within ScrollView
+    alignItems: 'center', // Center content horizontally within ScrollView
     padding: 10,
-    alignItems: 'center',
+  },
+  textWrapper: {
+    alignItems: 'center', // Center text horizontally within its wrapper
   },
   lineContainer: {
-    flexWrap: 'wrap', // Wrap at word boundaries
+    flexWrap: 'wrap',
     marginVertical: 5,
-    textAlign: 'center', // Center-align lines
+    textAlign: 'center',
   },
   word: {
-    flexShrink: 0, // Prevent words from shrinking or breaking
+    flexShrink: 0,
   },
   positiveBtn: {
     fontSize: 15,

@@ -6,7 +6,6 @@ import MlkitOcr from 'react-native-mlkit-ocr';
 export default function ReadingText({ navigation }) {
   const cameraRef = useRef(null);
   const devices = useCameraDevices();
-  // const device = devices.back;
   const device = devices.back || devices.rear || Object.values(devices)[0]; // Fallback
   const [cameraReady, setCameraReady] = useState(false);
   const [hasPermission, setHasPermission] = useState(false);
@@ -52,38 +51,10 @@ export default function ReadingText({ navigation }) {
     }
   }, [devices]);
 
-  // const takePicture = async () => {
-  //   if (cameraRef.current) {
-  //     try {
-  //       const photo = await cameraRef.current.takePhoto({ quality: 0.5 });
-  //       console.log('Photo captured:', photo.path);
-
-  //       const result = await MlkitOcr.detectFromUri(`file://${photo.path}`);
-  //       console.log('OCR Result:', result);
-
-  //       const extractedText = result.map(block => block.text).join('\n');
-  //       console.log('Extracted Text:', extractedText);
-
-  //       // Deactivate camera before navigating
-  //       setIsCameraActive(false);
-  //       console.log('Camera deactivated before navigation');
-
-  //       if (extractedText) {
-  //         navigation.navigate('Scanned Text', { scannedText: extractedText });
-  //       } else {
-  //         Alert.alert('Error', 'No text detected');
-  //       }
-  //     } catch (error) {
-  //       console.log('Error capturing photo or extracting text:', error);
-  //       Alert.alert('Error', 'Failed to process the photo');
-  //     }
-  //   }
-  // };
-
   const takePicture = async () => {
     if (cameraRef.current) {
       try {
-        setIsProcessing(true); // Start loading animation
+        setIsProcessing(true);
         const photo = await cameraRef.current.takePhoto({ quality: 0.5 });
         console.log('Photo captured:', photo.path);
 
@@ -105,12 +76,10 @@ export default function ReadingText({ navigation }) {
         console.log('Error capturing photo or extracting text:', error);
         Alert.alert('Error', 'Failed to process the photo');
       } finally {
-        setIsProcessing(false); // Stop loading animation
+        setIsProcessing(false);
       }
     }
   };
-
- 
 
   if (!hasPermission) {
     return (
@@ -138,6 +107,14 @@ export default function ReadingText({ navigation }) {
 
   return (
     <View style={styles.container}>
+      {/* Text Settings Button */}
+      <TouchableOpacity
+        style={styles.textSettingsButton}
+        onPress={() => navigation.navigate('Text Settings', { scannedText: '', letterSettings: {} })}
+      >
+        <Text style={styles.textSettingsText}>Text Settings</Text>
+      </TouchableOpacity>
+
       <Text style={styles.instruction}>Take a clear picture of your document.</Text>
 
       <View style={styles.cameraContainer}>
@@ -177,7 +154,25 @@ export default function ReadingText({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', alignItems: 'center', position: 'relative' },
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
+  },
+  textSettingsButton: {
+    backgroundColor: '#85fe78',
+    padding: 10,
+    borderRadius: 10,
+    marginTop: 20, // Space from top of screen
+    marginBottom: 10, // Space before instruction
+  },
+  textSettingsText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#12181e',
+    textAlign: 'center',
+  },
   instruction: {
     fontSize: 23,
     fontWeight: '600',
@@ -207,10 +202,10 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   loadingOverlay: {
-    ...StyleSheet.absoluteFillObject, // Overlay entire screen
+    ...StyleSheet.absoluteFillObject,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)', // Semi-transparent background
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   loadingText: {
     marginTop: 10,
