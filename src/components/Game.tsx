@@ -13,12 +13,31 @@ import Snake from "./Snake";
 import firestore from '@react-native-firebase/firestore';
 import { AppContext } from '../App.tsx';
 import gameResults from '../data/game_result.json';
+import Sound from 'react-native-sound'; // Import sound library
 
 const SNAKE_INITIAL_POSITION: Coordinate[] = [{ x: 5, y: 5 }];
 const FOOD_INITIAL_POSITION: Coordinate = { x: 5, y: 20 };
 const GAME_BOUNDS = { xMin: 0, xMax: 35, yMin: 0, yMax: 59 };
 const MOVE_INTERVAL = 200;
 const SCORE_INCREMENT = 10;
+
+Sound.setCategory('Playback');
+
+const biteSound = new Sound('bite.mp3', Sound.MAIN_BUNDLE, (error) => {
+  if (error) {
+    console.log('Failed to load bite sound:', error);
+    return;
+  }
+  console.log('Bite sound loaded successfully');
+});
+
+const crashSound = new Sound('crash.mp3', Sound.MAIN_BUNDLE, (error) => {
+  if (error) {
+    console.log('Failed to load crash sound:', error);
+    return;
+  }
+  console.log('Crash sound loaded successfully');
+});
 
 function getRandomFruitEmoji(): string {
   const fruitEmojis = ["🍎", "🍊", "🍋", "🍇", "🍉", "🍓", "🍑", "🍍"];
@@ -56,7 +75,7 @@ export default function Game(): JSX.Element {
           .limit(3)
           .get();
         const topPlayersData = leaderboardSnapshot.docs.map((doc) => ({
-          user_name: doc.data().user_name || 'Unknown', // Fallback if user_name is missing
+          user_name: doc.data().user_name || 'Unknown',
           score: doc.data().score || 0,
           email: doc.id,
         }));
@@ -68,7 +87,7 @@ export default function Game(): JSX.Element {
           .get();
         if (currentUserDoc.exists) {
           const userData = currentUserDoc.data();
-          setCurrentUserScore(userData?.score || 0); // Optional chaining with fallback
+          setCurrentUserScore(userData?.score || 0);
         }
       } catch (error) {
         console.error('Error fetching leaderboard:', error);
@@ -88,13 +107,12 @@ export default function Game(): JSX.Element {
 
       if (userDoc.exists) {
         const userData = userDoc.data();
-        const storedScore = userData?.score || 0; // Optional chaining with fallback
+        const storedScore = userData?.score || 0;
         if (newScore > storedScore) {
           await userRef.update({ score: newScore });
           setCurrentUserScore(newScore);
           console.log('High score updated:', newScore);
 
-          // Refresh leaderboard
           const leaderboardSnapshot = await firestore()
             .collection('snake_game_leadersboard')
             .orderBy('score', 'desc')
@@ -190,11 +208,25 @@ export default function Game(): JSX.Element {
 
     if (checkGameOver(newHead, GAME_BOUNDS)) {
       setIsGameOver(true);
+      crashSound.play((success) => {
+        if (success) {
+          console.log('Crash sound played successfully');
+        } else {
+          console.log('Crash sound playback failed');
+        }
+      });
       return;
     }
 
     if (snake.some(segment => segment.x === newHead.x && segment.y === newHead.y)) {
       setIsGameOver(true);
+      crashSound.play((success) => {
+        if (success) {
+          console.log('Crash sound played successfully');
+        } else {
+          console.log('Crash sound playback failed');
+        }
+      });
       return;
     }
 
@@ -203,6 +235,13 @@ export default function Game(): JSX.Element {
     );
     if (hasEatenWrongFruit) {
       setIsGameOver(true);
+      crashSound.play((success) => {
+        if (success) {
+          console.log('Crash sound played successfully');
+        } else {
+          console.log('Crash sound playback failed');
+        }
+      });
       return;
     }
 
@@ -213,6 +252,13 @@ export default function Game(): JSX.Element {
       spawnNewFood();
       setSnake([newHead, ...snake]);
       setScore(prevScore => prevScore + SCORE_INCREMENT);
+      biteSound.play((success) => {
+        if (success) {
+          console.log('Bite sound played successfully');
+        } else {
+          console.log('Bite sound playback failed');
+        }
+      });
     } else {
       setSnake([newHead, ...snake.slice(0, -1)]);
     }
@@ -259,7 +305,6 @@ export default function Game(): JSX.Element {
     setIsPaused(!isPaused);
   };
 
-  // Update game result and high score on game over
   useEffect(() => {
     if (isGameOver) {
       const averageSpeed = timeToReachFruit.length > 0 
@@ -295,7 +340,6 @@ export default function Game(): JSX.Element {
         console.log("No matching result found in game_result.json");
       }
 
-      // Update high score when game ends
       updateHighScore(score);
     }
   }, [isGameOver, score]);
@@ -303,7 +347,6 @@ export default function Game(): JSX.Element {
   if (!isLevelSelected) {
     return (
       <ScrollView contentContainerStyle={styles.levelSelectionContainer}>
-        {/* Leaderboard Section */}
         <View style={styles.leaderboardContainer}>
           <Text style={styles.leaderboardHeader}>Leaderboard</Text>
           {topPlayers.map((player, index) => (
@@ -320,7 +363,6 @@ export default function Game(): JSX.Element {
           </View>
         </View>
 
-        {/* Level Selection */}
         <Text style={styles.levelHeader}>Select Levels</Text>
         {[1, 2, 3, 4, 5].map((lvl) => (
           <TouchableOpacity
@@ -423,11 +465,11 @@ const styles = StyleSheet.create({
   },
   scoreText: {
     fontWeight: 'bold',
-    color: '#27ac1f', // Green for top players
+    color: '#27ac1f',
   },
   currentUserScore: {
     fontWeight: 'bold',
-    color: '#ff4500', // Orange-red for current user
+    color: '#ff4500',
   },
   levelHeader: {
     fontSize: 28,
