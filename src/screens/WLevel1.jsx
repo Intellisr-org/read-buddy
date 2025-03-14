@@ -18,9 +18,11 @@ import lettersData from '../data/letters.json';
 export default function WLevel1({ navigation, route }) {
   const signatureRef = useRef(null);
   const level = route.params?.level || 1;
-  const [modelResult, setModelResult] = useState([]);
+  const [modelResult, setModelResult] = useState([]); // Current word result
+  const [allResults, setAllResults] = useState([]); // Results for all 5 words
   const [currentWord, setCurrentWord] = useState(null);
-  const [previousWord, setPreviousWord] = useState(null);
+  const [wordList, setWordList] = useState([]); // 5 selected words
+  const [currentWordIndex, setCurrentWordIndex] = useState(0); // Index in wordList
   const [currentLetterIndex, setCurrentLetterIndex] = useState(0);
   const [videoUrl, setVideoUrl] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -29,7 +31,7 @@ export default function WLevel1({ navigation, route }) {
   const levelWords = writingWordsData.filter((word) => word.level === String(level));
 
   useEffect(() => {
-    selectRandomWord();
+    resetLevel();
   }, [level]);
 
   const capitalizeFirstLetter = (word) => {
@@ -37,18 +39,60 @@ export default function WLevel1({ navigation, route }) {
     return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
   };
 
-  const selectRandomWord = () => {
-    let newWord;
-    do {
-      const randomIndex = Math.floor(Math.random() * levelWords.length);
-      newWord = levelWords[randomIndex];
-    } while (newWord === previousWord && levelWords.length > 1);
-    setPreviousWord(currentWord);
-    setCurrentWord({ ...newWord, word: capitalizeFirstLetter(newWord.word) });
+  const selectFiveWords = () => {
+    const shuffled = [...levelWords].sort(() => 0.5 - Math.random());
+    const selected = shuffled.slice(0, Math.min(5, levelWords.length)).map((word) => ({
+      ...word,
+      word: capitalizeFirstLetter(word.word),
+    }));
+    return selected;
+  };
+
+  const resetLevel = () => {
+    const newWordList = selectFiveWords();
+    setWordList(newWordList);
+    setCurrentWord(newWordList[0]);
+    setCurrentWordIndex(0);
     setCurrentLetterIndex(0);
     setModelResult([]);
+    setAllResults([]);
     setVideoUrl(null);
     setVideoQueue([]);
+  };
+
+  const moveToNextWord = () => {
+    if (currentWordIndex + 1 < wordList.length) {
+      setCurrentWord(wordList[currentWordIndex + 1]);
+      setCurrentWordIndex(currentWordIndex + 1);
+      setCurrentLetterIndex(0);
+      setModelResult([]);
+      setVideoUrl(null);
+      setVideoQueue([]);
+    } else {
+      checkLevelCompletion();
+    }
+  };
+
+  const checkLevelCompletion = () => {
+    const allCorrect = allResults.every((result) => result.every((res) => res === true));
+    if (allCorrect) {
+      Alert.alert(
+        'Congratulations!',
+        `You've completed Level ${level} perfectly!`,
+        [
+          { text: 'Back to Levels', onPress: () => navigation.goBack() },
+        ]
+      );
+    } else {
+      Alert.alert(
+        'Keep Going!',
+        'Some answers were incorrect. Try this level again to improve!',
+        [
+          { text: 'Try Again', onPress: () => resetLevel() },
+          { text: 'Back to Levels', onPress: () => navigation.goBack() },
+        ]
+      );
+    }
   };
 
   const playAudio = () => {
@@ -118,18 +162,17 @@ export default function WLevel1({ navigation, route }) {
           .fill(null)
           .map(() => Math.random() > 0.5); // Simulate ML result
         setModelResult(simulatedResult);
+        setAllResults([...allResults, simulatedResult]);
         setLoading(false);
 
         if (simulatedResult.every((res) => res === true)) {
-          Alert.alert('Success', 'All letters are correct!', [
-            { text: 'Next Word', onPress: selectRandomWord },
-          ]);
+          moveToNextWord();
         } else {
           const incorrectIndices = simulatedResult
             .map((res, idx) => (res === false ? idx : null))
             .filter((idx) => idx !== null);
           const videosToPlay = incorrectIndices.map((idx) => {
-            const letter = currentWord.word[idx]; // Use exact case from word
+            const letter = currentWord.word[idx];
             const letterData = lettersData.find((l) => l.letter === letter);
             return letterData ? letterData.answer : null;
           }).filter(Boolean);
@@ -168,7 +211,7 @@ export default function WLevel1({ navigation, route }) {
         loadFirstVideo(nextQueue);
       } else {
         setVideoUrl(null);
-        selectRandomWord();
+        moveToNextWord();
       }
     }
   };
@@ -190,19 +233,34 @@ export default function WLevel1({ navigation, route }) {
   return (
     <View style={styles.container}>
       {!videoUrl && (
+                
         <View style={styles.insContainer}>
-          <View>
+          <View style={styles.container2}>
             <Text style={styles.insTxt}>
-              {/* Write the {getOrdinal(currentLetterIndex)} letter of "{currentWord?.word}" */}
-              Write the {getOrdinal(currentLetterIndex)} letter"
+              {/* Write the {getOrdinal(currentLetterIndex)} letter of "{currentWord?.word}"  */}
+              Write the {getOrdinal(currentLetterIndex)} letter of this word 
+            </Text>
+            <Text style={styles.insTxt}>
+              (Word {currentWordIndex + 1}/5)
+            </Text>            
+            <Text style={styles.insTxt2}>
+              Write the word letter-by-letter on the cavas
+            </Text>
+            <Text style={styles.insTxt2}>
+              1st Letter should be in Capital
+            </Text>
+            <Text style={styles.insTxt2}>
+              (eg: Man)
             </Text>
           </View>
-          <TouchableOpacity onPress={playAudio}>
+          <TouchableOpacity onPress={playAudio} >
             <Text style={styles.speakBtnTxt}>
               <Image source={require('../assets/speaker0.png')} style={styles.speakBtnIcon} />
             </Text>
           </TouchableOpacity>
+          
         </View>
+       
       )}
 
       {!videoUrl && (
@@ -273,8 +331,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     justifyContent: 'center',
   },
+  container2: {
+    alignItems: 'center',
+    justifyContent:'center'
+    
+  },
   insContainer: {
-    flexDirection: 'row',
+    flexDirection: 'column',
     justifyContent: 'space-between',
     alignItems: 'center',
     borderWidth: 1,
@@ -288,6 +351,20 @@ const styles = StyleSheet.create({
     fontSize: 23,
     fontWeight: '600',
     color: '#27ac1f',
+    textAlign:'center'
+  },
+
+  insTxt2: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#27ac1f',
+  },
+  speakBtnContainer:{
+    flex:1
+  },
+  insTextContainer: {
+    flexDirection: 'column',
+    flex: 2,
   },
   speakBtnIcon: {
     width: 50,

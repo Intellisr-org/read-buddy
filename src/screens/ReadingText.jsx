@@ -130,7 +130,7 @@ export default function ReadingText({ navigation }) {
           }}
           onError={(error) => {
             console.log('Camera error:', error);
-            Alert.alert('Error', 'Failed to initialize camera: ' + error.message);
+            // Alert.alert('Error', 'Failed to initialize camera: ' + error.message);
           }}
         />
       </View>

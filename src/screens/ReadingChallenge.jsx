@@ -233,6 +233,7 @@ const styles = StyleSheet.create({
   },
   answerText: {
     textAlign: 'center',
+    fontFamily: 'OpenDyslexic3-Regular',
   },
   scoreText: {
     fontSize: 20,

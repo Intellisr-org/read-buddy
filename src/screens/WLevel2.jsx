@@ -14,6 +14,7 @@ import SignatureScreen from 'react-native-signature-canvas';
 import Tts from 'react-native-tts';
 import Video from 'react-native-video';
 import numbersData from '../data/numbers.json';
+import { myurl } from '../data/url';
 
 export default function WLevel2({ navigation }) {
   const signatureRef = useRef(null);
@@ -22,6 +23,8 @@ export default function WLevel2({ navigation }) {
   const [currentNum, setCurrentNum] = useState(null);
   const [videoUrl, setVideoUrl] = useState(null);
   const [loading, setLoading] = useState(false);
+
+  
 
   const playAudio = () => {
     try {
@@ -59,6 +62,30 @@ export default function WLevel2({ navigation }) {
     }
   };
 
+  const click =() =>{
+    const fetchData = async () => {
+      // setIsLoading(true);
+      try {
+        const response = await fetch(myurl+'/numbers', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ number: currentNum.number }),
+        });
+
+        const data = await response.json();
+        setModelResul(data["res"]);
+      } catch (error) {
+        console.error('Error:', error);
+      } finally {
+        // setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }
+
   const uploadSignature = async (base64Data) => {
     try {
       if (!base64Data || base64Data.length < 50) {
@@ -77,6 +104,7 @@ export default function WLevel2({ navigation }) {
       console.log('Upload complete');
 
       clearCanvas();
+      click();
 
       if (modelResul === false && currentNum) {
         const videoRef = storage().ref(currentNum.answer);
