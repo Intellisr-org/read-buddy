@@ -23,9 +23,11 @@ import SLevel4 from './screens/SLevel4';
 import ReadingText from './screens/ReadingText';
 import ReadingChallenge from './screens/ReadingChallenge';
 import LetterAnimation from './screens/LetterAnimation';
+import GameOverScreen from './components/GameOverScreen';
+import Game from './components/Game';
 
 // Define navigation param lists
-type RootStackParamList = {
+export type RootStackParamList = {
   Login: undefined;
   Register: undefined;
   Home: undefined;
@@ -46,11 +48,33 @@ type RootStackParamList = {
   'Speech Level 3': undefined;
   'Speech Level 4': undefined;
   'Say the word': undefined;
+  GameOver: {
+    score: number;
+    result: {
+      result: string;
+      description: string;
+      topic1: string;
+      topic2: string;
+      topic3: string;
+      topic4: string;
+      topic5: string;
+      topic6: string;
+      topic7: string;
+      message1: string;
+      message2: string;
+      message3: string;
+      message4: string;
+      message5: string;
+      message6: string;
+      message7: string;
+    };
+  };
+  Game: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
-// App Context for State Management (Moved outside and exported)
+// App Context for State Management
 export const AppContext = React.createContext<{
   loggedInUser: string | null;
   setLoggedInUser: (user: string | null) => void;
@@ -242,6 +266,8 @@ function App() {
               <Stack.Screen name="Speech Level 3" component={SLevel3} />
               <Stack.Screen name="Speech Level 4" component={SLevel4} />
               <Stack.Screen name="Say the word" component={LetterAnimation} />
+              <Stack.Screen name="Game" component={Game} />
+              {/* <Stack.Screen name="GameOver" component={GameOverScreen} /> */}
             </>
           ) : (
             <>

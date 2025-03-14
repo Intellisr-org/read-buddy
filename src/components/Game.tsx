@@ -13,7 +13,8 @@ import Snake from "./Snake";
 import firestore from '@react-native-firebase/firestore';
 import { AppContext } from '../App.tsx';
 import gameResults from '../data/game_result.json';
-import Sound from 'react-native-sound'; // Import sound library
+import Sound from 'react-native-sound';
+import GameOverScreen from './GameOverScreen'; // Import GameOverScreen
 
 const SNAKE_INITIAL_POSITION: Coordinate[] = [{ x: 5, y: 5 }];
 const FOOD_INITIAL_POSITION: Coordinate = { x: 5, y: 20 };
@@ -59,11 +60,27 @@ export default function Game(): JSX.Element {
   const [rightFruitEmoji, setRightFruitEmoji] = useState<string>(getRandomFruitEmoji());
   const [fruitSpawnTime, setFruitSpawnTime] = useState<number>(Date.now());
   const [timeToReachFruit, setTimeToReachFruit] = useState<number[]>([]);
-  const [gameResult, setGameResult] = useState<{ result: string; message1: string; } | null>(null);
+  const [gameOverResult, setGameOverResult] = useState<{
+    result: string;
+    description: string;
+    topic1: string;
+    topic2: string;
+    topic3: string;
+    topic4: string;
+    topic5: string;
+    topic6: string;
+    topic7: string;
+    message1: string;
+    message2: string;
+    message3: string;
+    message4: string;
+    message5: string;
+    message6: string;
+    message7: string;
+  } | null>(null);
   const [topPlayers, setTopPlayers] = useState<{ user_name: string; score: number; email: string }[]>([]);
   const [currentUserScore, setCurrentUserScore] = useState<number>(0);
 
-  // Fetch leaderboard data
   useEffect(() => {
     const fetchLeaderboard = async () => {
       if (!loggedInUser) return;
@@ -97,7 +114,6 @@ export default function Game(): JSX.Element {
     fetchLeaderboard();
   }, [loggedInUser]);
 
-  // Update high score in Firestore
   const updateHighScore = async (newScore: number) => {
     if (!loggedInUser) return;
 
@@ -209,11 +225,8 @@ export default function Game(): JSX.Element {
     if (checkGameOver(newHead, GAME_BOUNDS)) {
       setIsGameOver(true);
       crashSound.play((success) => {
-        if (success) {
-          console.log('Crash sound played successfully');
-        } else {
-          console.log('Crash sound playback failed');
-        }
+        if (success) console.log('Crash sound played successfully');
+        else console.log('Crash sound playback failed');
       });
       return;
     }
@@ -221,11 +234,8 @@ export default function Game(): JSX.Element {
     if (snake.some(segment => segment.x === newHead.x && segment.y === newHead.y)) {
       setIsGameOver(true);
       crashSound.play((success) => {
-        if (success) {
-          console.log('Crash sound played successfully');
-        } else {
-          console.log('Crash sound playback failed');
-        }
+        if (success) console.log('Crash sound played successfully');
+        else console.log('Crash sound playback failed');
       });
       return;
     }
@@ -236,11 +246,8 @@ export default function Game(): JSX.Element {
     if (hasEatenWrongFruit) {
       setIsGameOver(true);
       crashSound.play((success) => {
-        if (success) {
-          console.log('Crash sound played successfully');
-        } else {
-          console.log('Crash sound playback failed');
-        }
+        if (success) console.log('Crash sound played successfully');
+        else console.log('Crash sound playback failed');
       });
       return;
     }
@@ -253,11 +260,8 @@ export default function Game(): JSX.Element {
       setSnake([newHead, ...snake]);
       setScore(prevScore => prevScore + SCORE_INCREMENT);
       biteSound.play((success) => {
-        if (success) {
-          console.log('Bite sound played successfully');
-        } else {
-          console.log('Bite sound playback failed');
-        }
+        if (success) console.log('Bite sound played successfully');
+        else console.log('Bite sound playback failed');
       });
     } else {
       setSnake([newHead, ...snake.slice(0, -1)]);
@@ -298,7 +302,7 @@ export default function Game(): JSX.Element {
     setRightFruitEmoji(getRandomFruitEmoji());
     setTimeToReachFruit([]);
     setFruitSpawnTime(Date.now());
-    setGameResult(null);
+    setGameOverResult(null); // Reset result
   };
 
   const pauseGame = () => {
@@ -316,7 +320,7 @@ export default function Game(): JSX.Element {
       let result;
       if (averageSpeed === 0) {
         result = gameResults.find(record => 
-          record.level === level && record.result === "Low"
+          record.level === level && record.result.includes("Low")
         );
       } else {
         result = gameResults.find(record => 
@@ -327,15 +331,30 @@ export default function Game(): JSX.Element {
       }
 
       if (result) {
-        setGameResult({
+        setGameOverResult({
           result: result.result,
+          description: result.description,
+          topic1: result.topic1,
+          topic2: result.topic2,
+          topic3: result.topic3,
+          topic4: result.topic4,
+          topic5: result.topic5,
+          topic6: result.topic6,
+          topic7: result.topic7,
           message1: result.message1,
+          message2: result.message2,
+          message3: result.message3,
+          message4: result.message4,
+          message5: result.message5,
+          message6: result.message6,
+          message7: result.message7,
         });
-        console.log(`Game Result: ${result.result}, Message: ${result.message1}`);
       } else {
-        setGameResult({
+        setGameOverResult({
           result: "Unknown",
-          message1: "No matching performance range found.",
+          description: "No matching performance range found.",
+          topic1: "", topic2: "", topic3: "", topic4: "", topic5: "", topic6: "", topic7: "",
+          message1: "", message2: "", message3: "", message4: "", message5: "", message6: "", message7: "",
         });
         console.log("No matching result found in game_result.json");
       }
@@ -399,19 +418,13 @@ export default function Game(): JSX.Element {
               <WrongFruit key={index} x={fruit.x} y={fruit.y} />
             ))}
           </View>
-          {isGameOver && (
+          {isGameOver && gameOverResult && (
             <View style={styles.gameOverOverlay}>
-              <Text style={styles.gameOverText}>Game Over</Text>
-              <Text style={styles.gameOverScore}>Score: {score}</Text>
-              {gameResult && (
-                <>
-                  <Text style={styles.gameResultText}>Result: {gameResult.result}</Text>
-                  <Text style={styles.gameResultMessage}>{gameResult.message1}</Text>
-                </>
-              )}
-              <Text style={styles.gameOverInstruction} onPress={reloadGame}>
-                Tap to Restart
-              </Text>
+              <GameOverScreen
+                score={score}
+                result={gameOverResult}
+                onRestart={reloadGame}
+              />
             </View>
           )}
         </SafeAreaView>
@@ -505,38 +518,13 @@ const styles = StyleSheet.create({
   },
   gameOverOverlay: {
     position: "absolute",
-    top: "30%",
-    left: "10%",
-    right: "10%",
-    backgroundColor: "rgba(0,0,0,0.7)",
-    padding: 20,
-    borderRadius: 10,
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: "center",
     alignItems: "center",
-  },
-  gameOverText: {
-    fontSize: 32,
-    color: "#fff",
-    marginBottom: 10,
-  },
-  gameOverScore: {
-    fontSize: 24,
-    color: "#fff",
-    marginBottom: 10,
-  },
-  gameResultText: {
-    fontSize: 20,
-    color: "#85fe78",
-    marginBottom: 10,
-  },
-  gameResultMessage: {
-    fontSize: 16,
-    color: "#fff",
-    textAlign: "center",
-    marginBottom: 20,
-  },
-  gameOverInstruction: {
-    fontSize: 18,
-    color: "#fff",
-    textDecorationLine: "underline",
+    backgroundColor: 'rgba(0, 0, 0, 0.8)', // Optional: slight dimming behind the overlay
+    
   },
 });
