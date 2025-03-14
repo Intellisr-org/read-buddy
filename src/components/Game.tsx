@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { SafeAreaView, StyleSheet, View, Text, Dimensions } from "react-native";
+import React, { useEffect, useState, useContext } from "react";
+import { SafeAreaView, StyleSheet, View, Text, Dimensions, ScrollView, TouchableOpacity } from "react-native";
 import { PanGestureHandler, GestureHandlerRootView } from "react-native-gesture-handler";
 import { Colors } from "../styles/colors";
 import { Direction, Coordinate, GestureEventType } from "../types/types";
@@ -10,10 +10,10 @@ import WrongFruit from "./WrongFruit";
 import Header from "./Header";
 import Score from "./Score";
 import Snake from "./Snake";
-import LevelSelection from "./LevelSelection";
-import gameResults from '../data/game_result.json'; // Adjust path as needed
+import firestore from '@react-native-firebase/firestore';
+import { AppContext } from '../App.tsx';
+import gameResults from '../data/game_result.json';
 
-// Constants for initial game setup
 const SNAKE_INITIAL_POSITION: Coordinate[] = [{ x: 5, y: 5 }];
 const FOOD_INITIAL_POSITION: Coordinate = { x: 5, y: 20 };
 const GAME_BOUNDS = { xMin: 0, xMax: 35, yMin: 0, yMax: 59 };
@@ -27,6 +27,7 @@ function getRandomFruitEmoji(): string {
 }
 
 export default function Game(): JSX.Element {
+  const { loggedInUser } = useContext(AppContext);
   const [direction, setDirection] = useState<Direction>(Direction.Right);
   const [snake, setSnake] = useState<Coordinate[]>(SNAKE_INITIAL_POSITION);
   const [food, setFood] = useState<Coordinate>(FOOD_INITIAL_POSITION);
@@ -40,6 +41,77 @@ export default function Game(): JSX.Element {
   const [fruitSpawnTime, setFruitSpawnTime] = useState<number>(Date.now());
   const [timeToReachFruit, setTimeToReachFruit] = useState<number[]>([]);
   const [gameResult, setGameResult] = useState<{ result: string; message1: string; } | null>(null);
+  const [topPlayers, setTopPlayers] = useState<{ user_name: string; score: number; email: string }[]>([]);
+  const [currentUserScore, setCurrentUserScore] = useState<number>(0);
+
+  // Fetch leaderboard data
+  useEffect(() => {
+    const fetchLeaderboard = async () => {
+      if (!loggedInUser) return;
+
+      try {
+        const leaderboardSnapshot = await firestore()
+          .collection('snake_game_leadersboard')
+          .orderBy('score', 'desc')
+          .limit(3)
+          .get();
+        const topPlayersData = leaderboardSnapshot.docs.map((doc) => ({
+          user_name: doc.data().user_name || 'Unknown', // Fallback if user_name is missing
+          score: doc.data().score || 0,
+          email: doc.id,
+        }));
+        setTopPlayers(topPlayersData);
+
+        const currentUserDoc = await firestore()
+          .collection('snake_game_leadersboard')
+          .doc(loggedInUser)
+          .get();
+        if (currentUserDoc.exists) {
+          const userData = currentUserDoc.data();
+          setCurrentUserScore(userData?.score || 0); // Optional chaining with fallback
+        }
+      } catch (error) {
+        console.error('Error fetching leaderboard:', error);
+      }
+    };
+
+    fetchLeaderboard();
+  }, [loggedInUser]);
+
+  // Update high score in Firestore
+  const updateHighScore = async (newScore: number) => {
+    if (!loggedInUser) return;
+
+    try {
+      const userRef = firestore().collection('snake_game_leadersboard').doc(loggedInUser);
+      const userDoc = await userRef.get();
+
+      if (userDoc.exists) {
+        const userData = userDoc.data();
+        const storedScore = userData?.score || 0; // Optional chaining with fallback
+        if (newScore > storedScore) {
+          await userRef.update({ score: newScore });
+          setCurrentUserScore(newScore);
+          console.log('High score updated:', newScore);
+
+          // Refresh leaderboard
+          const leaderboardSnapshot = await firestore()
+            .collection('snake_game_leadersboard')
+            .orderBy('score', 'desc')
+            .limit(3)
+            .get();
+          const updatedTopPlayers = leaderboardSnapshot.docs.map((doc) => ({
+            user_name: doc.data().user_name || 'Unknown',
+            score: doc.data().score || 0,
+            email: doc.id,
+          }));
+          setTopPlayers(updatedTopPlayers);
+        }
+      }
+    } catch (error) {
+      console.error('Error updating high score:', error);
+    }
+  };
 
   const initializeWrongFruits = (count: number) => {
     const newWrongFruits: Coordinate[] = [];
@@ -81,7 +153,6 @@ export default function Game(): JSX.Element {
       GAME_BOUNDS.yMax,
       [...snake, ...wrongFruits]
     );
-
     if (
       newFoodPosition.x >= GAME_BOUNDS.xMin &&
       newFoodPosition.x <= GAME_BOUNDS.xMax &&
@@ -188,23 +259,21 @@ export default function Game(): JSX.Element {
     setIsPaused(!isPaused);
   };
 
-  // Determine game result based on average_speed and level
+  // Update game result and high score on game over
   useEffect(() => {
     if (isGameOver) {
       const averageSpeed = timeToReachFruit.length > 0 
         ? timeToReachFruit.reduce((a, b) => a + b, 0) / timeToReachFruit.length 
         : 0;
 
-      console.log(`Level: ${level}, Average Speed: ${averageSpeed}`);
+      console.log(`Level: ${level}, Average Speed: ${averageSpeed}, Score: ${score}`);
 
       let result;
       if (averageSpeed === 0) {
-        // If no points scored (average_speed = 0), default to "Low" for the level
         result = gameResults.find(record => 
           record.level === level && record.result === "Low"
         );
       } else {
-        // Otherwise, find the matching range
         result = gameResults.find(record => 
           record.level === level && 
           averageSpeed >= record.rangemin && 
@@ -216,7 +285,6 @@ export default function Game(): JSX.Element {
         setGameResult({
           result: result.result,
           message1: result.message1,
-          // message2: result.message2,
         });
         console.log(`Game Result: ${result.result}, Message: ${result.message1}`);
       } else {
@@ -226,11 +294,45 @@ export default function Game(): JSX.Element {
         });
         console.log("No matching result found in game_result.json");
       }
+
+      // Update high score when game ends
+      updateHighScore(score);
     }
-  }, [isGameOver]);
+  }, [isGameOver, score]);
 
   if (!isLevelSelected) {
-    return <LevelSelection onLevelSelect={handleLevelSelect} />;
+    return (
+      <ScrollView contentContainerStyle={styles.levelSelectionContainer}>
+        {/* Leaderboard Section */}
+        <View style={styles.leaderboardContainer}>
+          <Text style={styles.leaderboardHeader}>Leaderboard</Text>
+          {topPlayers.map((player, index) => (
+            <View key={index} style={styles.leaderboardItem}>
+              <Text style={styles.leaderboardText}>
+                {index + 1}. {player.user_name}: <Text style={styles.scoreText}>{player.score}</Text>
+              </Text>
+            </View>
+          ))}
+          <View style={styles.currentUserItem}>
+            <Text style={styles.leaderboardText}>
+              You: <Text style={styles.currentUserScore}>{currentUserScore}</Text>
+            </Text>
+          </View>
+        </View>
+
+        {/* Level Selection */}
+        <Text style={styles.levelHeader}>Select Levels</Text>
+        {[1, 2, 3, 4, 5].map((lvl) => (
+          <TouchableOpacity
+            key={lvl}
+            style={styles.levelButton}
+            onPress={() => handleLevelSelect(lvl)}
+          >
+            <Text style={styles.levelText}>Level {lvl}</Text>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
+    );
   }
 
   return (
@@ -281,6 +383,71 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.primary,
   },
+  levelSelectionContainer: {
+    flexGrow: 1,
+    alignItems: 'center',
+    padding: 20,
+    backgroundColor: Colors.primary,
+  },
+  leaderboardContainer: {
+    width: '100%',
+    marginBottom: 20,
+    padding: 10,
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 3,
+  },
+  leaderboardHeader: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    textAlign: 'center',
+    color: '#333',
+  },
+  leaderboardItem: {
+    marginVertical: 5,
+  },
+  currentUserItem: {
+    marginVertical: 5,
+    borderTopWidth: 1,
+    borderTopColor: '#ccc',
+    paddingTop: 5,
+  },
+  leaderboardText: {
+    fontSize: 18,
+    color: '#333',
+  },
+  scoreText: {
+    fontWeight: 'bold',
+    color: '#27ac1f', // Green for top players
+  },
+  currentUserScore: {
+    fontWeight: 'bold',
+    color: '#ff4500', // Orange-red for current user
+  },
+  levelHeader: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    marginVertical: 20,
+    color: '#fff',
+  },
+  levelButton: {
+    backgroundColor: '#85fe78',
+    padding: 15,
+    borderRadius: 10,
+    marginVertical: 10,
+    width: '80%',
+    alignItems: 'center',
+  },
+  levelText: {
+    fontSize: 20,
+    color: '#12181e',
+    fontWeight: '600',
+  },
   boundaries: {
     flex: 1,
     borderColor: Colors.primary,
@@ -293,12 +460,6 @@ const styles = StyleSheet.create({
   headerContent: {
     flexDirection: "row",
     alignItems: "center",
-  },
-  levelText: {
-    fontSize: 18,
-    color: "#12181e",
-    textAlign: "center",
-    marginLeft: 10,
   },
   gameOverOverlay: {
     position: "absolute",
