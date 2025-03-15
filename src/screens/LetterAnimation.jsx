@@ -494,6 +494,7 @@
 //     textAlign: 'center',
 //   },
 // });
+
 import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
@@ -527,25 +528,22 @@ export default function LetterAnimation({ navigation, route }) {
   const [wordResults, setWordResults] = useState([]);
   const [imageUrl, setImageUrl] = useState(null);
 
-  const click = () => {
-    const fetchData = async () => {
-      try {
-        const response = await fetch(myurl + '/speech', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ word: 'man' }), // Replace with dynamic word if needed
-        });
-
-        const data = await response.json();
-        setModelResult(data["res"]);
-      } catch (error) {
-        console.error('Error:', error);
-      }
-    };
-
-    fetchData();
+  const click = async () => {
+    try {
+      const response = await fetch(myurl + '/speech', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ word: word }),
+      });
+      const data = await response.json();
+      console.log('API Response:', data);
+      return data["res"];
+    } catch (error) {
+      console.error('Error:', error);
+      return null;
+    }
   };
 
   const levelWords = words.filter((word) => word.level === level);
@@ -629,7 +627,7 @@ export default function LetterAnimation({ navigation, route }) {
   };
 
   const requestMicPermission = async () => {
-    if (Platform.OS === 'android') {
+    if (Platform.OS === 'android') { // Fixed typo here
       try {
         const granted = await PermissionsAndroid.request(
           PermissionsAndroid.PERMISSIONS.RECORD_AUDIO,
@@ -700,21 +698,26 @@ export default function LetterAnimation({ navigation, route }) {
       const downloadURL = await reference.getDownloadURL();
       console.log('Uploaded to Firebase:', downloadURL);
 
-      click(); // Fetch model result
-      // Wait briefly for modelResult to update (temporary fix, improve with async handling if needed)
-      setTimeout(() => {
-        setWordResults((prev) => [...prev.slice(0, currentWordIndex), modelResult]);
-        if (modelResult === true) {
-          Alert.alert('Success', 'Your Answer is correct');
-          setStatus('Click Next to continue');
-        } else if (modelResult === false) {
-          setStatus('Listen to the correct pronunciation');
-          playCorrectAudio();
-        }
-      }, 500); // Adjust delay if needed based on API response time
+      const result = await click();
+      console.log('Model Result:', result);
+      if (result === null) {
+        setStatus('Error fetching model result. Try again.');
+        return;
+      }
+
+      setModelResult(result);
+      setWordResults((prev) => [...prev.slice(0, currentWordIndex), result]);
+
+      if (result === true) {
+        Alert.alert('Success', 'Your Answer is correct');
+        setStatus('Click Next to continue');
+      } else {
+        setStatus('Listen to the correct pronunciation');
+        playCorrectAudio();
+      }
     } catch (error) {
       console.error('Stop recording/upload error:', error);
-      setStatus('Error uploading audio. Click Next to continue.');
+      setStatus('Error uploading audio. Try again.');
     }
   };
 
@@ -726,17 +729,17 @@ export default function LetterAnimation({ navigation, route }) {
       const sound = new Sound(url, null, (error) => {
         if (error) {
           console.log('Failed to load sound', error);
-          setStatus('Error playing audio. Click Next to continue.');
+          setStatus('Error playing audio. Click Replay to try again.');
           return;
         }
         sound.play(() => {
           sound.release();
-          setStatus('Click Next or Replay to continue');
+          setStatus('Click Replay to hear again');
         });
       });
     } catch (error) {
       console.error('Audio playback error:', error);
-      setStatus('Error fetching audio. Click Next to continue.');
+      setStatus('Error fetching audio. Try again.');
     }
   };
 
@@ -816,7 +819,7 @@ export default function LetterAnimation({ navigation, route }) {
         {animationStep === 2 && renderAnimatedLetters()}
       </View>
 
-      {/* Main Controls (Speak Button) */}
+      {/* Initial State: Show only Speak button */}
       {modelResult === null && (
         <View style={styles.maincontrols}>
           <TouchableOpacity
@@ -829,8 +832,9 @@ export default function LetterAnimation({ navigation, route }) {
         </View>
       )}
 
-      {/* Conditional Buttons Based on modelResult */}
+      {/* Conditional Buttons */}
       <View style={styles.controls}>
+        {/* If modelResult is false, show Start Animation, Reset, Replay */}
         {modelResult === false && (
           <>
             <TouchableOpacity
@@ -852,7 +856,9 @@ export default function LetterAnimation({ navigation, route }) {
             </TouchableOpacity>
           </>
         )}
-        {(modelResult === true || modelResult === false) && (
+
+        {/* If modelResult is true, show only Next button */}
+        {modelResult === true && (
           <TouchableOpacity style={styles.speakButton} onPress={goToNextWord}>
             <Text style={styles.buttonText}>Next</Text>
           </TouchableOpacity>

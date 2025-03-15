@@ -156,8 +156,8 @@ function RegisterScreen({ navigation }: NativeStackScreenProps<RootStackParamLis
   const handleRegister = async () => {
     try {
       const ageNum = parseInt(age, 10);
-      if (isNaN(ageNum) || ageNum <= 26) {
-        Alert.alert('Error', 'Age must be greater than 26');
+      if (isNaN(ageNum) || ageNum <= 18) {
+        Alert.alert('Error', 'Age must be greater than 18');
         return;
       }
 

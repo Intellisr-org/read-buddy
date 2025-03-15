@@ -63,6 +63,7 @@ export default function WLevel2({ navigation }) {
   };
 
   const click =() =>{
+    console.log(currentNum.number)
     const fetchData = async () => {
       // setIsLoading(true);
       try {
@@ -71,7 +72,7 @@ export default function WLevel2({ navigation }) {
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ number: currentNum.number }),
+          body: JSON.stringify({ number: currentNum.number }),          
         });
 
         const data = await response.json();
@@ -125,9 +126,9 @@ export default function WLevel2({ navigation }) {
   };
 
   const webStyle = `
-    .m-signature-pad { width: 100%; height: 100%; margin: 0; padding: 0; background: transparent; }
-    .m-signature-pad--body { border: none; width: 100%; height: 100%; background: transparent; }
-    canvas { width: 100%; height: 100%; background: transparent; }
+    .m-signature-pad { width: 100%; height: 100%; margin: 0; padding: 0;  }
+    .m-signature-pad--body { border: none; width: 100%; height: 100%; }
+    canvas { width: 100%; height: 100%; }
   `;
 
   return (
@@ -147,20 +148,26 @@ export default function WLevel2({ navigation }) {
       )}
 
       {!videoUrl && (
-        <ImageBackground
-          source={require('../assets/kite.jpg')} // Replace with your desired background image
-          style={styles.canvasContainer}
-          resizeMode="cover"
-        >
+        // <ImageBackground
+        //   source={require('../assets/kite.jpg')} // Replace with your desired background image
+        //   style={styles.canvasContainer}
+        //   resizeMode="cover"
+        // >
+        <View style={styles.canvasContainer}>
           <SignatureScreen
             ref={signatureRef}
             webStyle={webStyle}
+            bgHeight={"100%"}
+            bgWidth={"100%"}
+            // imageType={'image/jpeg'}
+            bgSrc={"https://i.ibb.co/8g7jnFF5/numbg.png"}
             onOK={uploadSignature}
             onEmpty={() => console.log('Signature is empty')}
             onBegin={() => console.log('Drawing started')}
             onEnd={() => console.log('Drawing ended')}
           />
-        </ImageBackground>
+          </View>
+        // </ImageBackground>
       )}
 
       {videoUrl && (
