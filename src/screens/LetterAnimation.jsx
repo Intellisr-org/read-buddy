@@ -837,6 +837,17 @@ export default function LetterAnimation({ navigation, route }) {
         {/* If modelResult is false, show Start Animation, Reset, Replay */}
         {modelResult === false && (
           <>
+
+        <View style={styles.maincontrols}>
+          <TouchableOpacity
+            style={[styles.speakButton, isRecording && styles.buttonDisabled]}
+            onPress={startRecording}
+            disabled={isRecording}
+          >
+            <Text style={styles.buttonText}>Speak</Text>
+          </TouchableOpacity>
+        </View>
+          
             <TouchableOpacity
               style={[styles.button, isAnimating && styles.buttonDisabled]}
               onPress={startAnimation}
@@ -854,6 +865,9 @@ export default function LetterAnimation({ navigation, route }) {
             <TouchableOpacity style={styles.button} onPress={replayAudio}>
               <Text style={styles.buttonText}>Replay</Text>
             </TouchableOpacity>
+            <TouchableOpacity style={styles.speakButton} onPress={goToNextWord}>
+            <Text style={styles.buttonText}>Next</Text>
+          </TouchableOpacity>
           </>
         )}
 

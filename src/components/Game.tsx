@@ -14,7 +14,7 @@ import firestore from '@react-native-firebase/firestore';
 import { AppContext } from '../App.tsx';
 import gameResults from '../data/game_result.json';
 import Sound from 'react-native-sound';
-import GameOverScreen from './GameOverScreen'; // Import GameOverScreen
+import GameOverScreen from './GameOverScreen';
 
 const SNAKE_INITIAL_POSITION: Coordinate[] = [{ x: 5, y: 5 }];
 const FOOD_INITIAL_POSITION: Coordinate = { x: 5, y: 20 };
@@ -25,19 +25,13 @@ const SCORE_INCREMENT = 10;
 Sound.setCategory('Playback');
 
 const biteSound = new Sound('bite.mp3', Sound.MAIN_BUNDLE, (error) => {
-  if (error) {
-    console.log('Failed to load bite sound:', error);
-    return;
-  }
-  console.log('Bite sound loaded successfully');
+  if (error) console.log('Failed to load bite sound:', error);
+  else console.log('Bite sound loaded successfully');
 });
 
 const crashSound = new Sound('crash.mp3', Sound.MAIN_BUNDLE, (error) => {
-  if (error) {
-    console.log('Failed to load crash sound:', error);
-    return;
-  }
-  console.log('Crash sound loaded successfully');
+  if (error) console.log('Failed to load crash sound:', error);
+  else console.log('Crash sound loaded successfully');
 });
 
 function getRandomFruitEmoji(): string {
@@ -240,8 +234,11 @@ export default function Game(): JSX.Element {
       return;
     }
 
+    const tolerance = 1; // Tolerance for wrongFruits
     const hasEatenWrongFruit = wrongFruits.some(
-      (fruit) => fruit.x === newHead.x && fruit.y === newHead.y
+      (fruit) => 
+        Math.abs(fruit.x - newHead.x) <= tolerance && 
+        Math.abs(fruit.y - newHead.y) <= tolerance
     );
     if (hasEatenWrongFruit) {
       setIsGameOver(true);
@@ -252,8 +249,8 @@ export default function Game(): JSX.Element {
       return;
     }
 
-    const tolerance = 2;
-    if (Math.abs(newHead.x - food.x) <= tolerance && Math.abs(newHead.y - food.y) <= tolerance) {
+    const foodTolerance = 2; // Tolerance for food
+    if (Math.abs(newHead.x - food.x) <= foodTolerance && Math.abs(newHead.y - food.y) <= foodTolerance) {
       const timeTaken = (Date.now() - fruitSpawnTime) / 1000;
       setTimeToReachFruit(prev => [...prev, timeTaken]);
       spawnNewFood();
@@ -302,7 +299,7 @@ export default function Game(): JSX.Element {
     setRightFruitEmoji(getRandomFruitEmoji());
     setTimeToReachFruit([]);
     setFruitSpawnTime(Date.now());
-    setGameOverResult(null); // Reset result
+    setGameOverResult(null);
   };
 
   const pauseGame = () => {
@@ -524,7 +521,6 @@ const styles = StyleSheet.create({
     bottom: 0,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: 'rgba(0, 0, 0, 0.8)', // Optional: slight dimming behind the overlay
-    
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
   },
 });
