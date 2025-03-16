@@ -148,91 +148,6 @@ function LoginScreen({ navigation }: NativeStackScreenProps<RootStackParamList, 
   );
 }
 
-// function RegisterScreen({ navigation }: NativeStackScreenProps<RootStackParamList, 'Register'>) {
-//   const [userName, setUserName] = useState('');
-//   const [email, setEmail] = useState('');
-//   const [password, setPassword] = useState('');
-//   const [age, setAge] = useState('');
-
-//   const handleRegister = async () => {
-//     try {
-//       const ageNum = parseInt(age, 10);
-//       if (isNaN(ageNum) || ageNum <= 18) {
-//         Alert.alert('Error', 'Age must be greater than 18');
-//         return;
-//       }
-
-//       const usersSnapshot = await firestore()
-//         .collection('snake_game_leadersboard')
-//         .where('user_name', '==', userName)
-//         .get();
-
-//       if (!usersSnapshot.empty) {
-//         Alert.alert('Error', 'User name already exists');
-//       } else {
-//         await firestore()
-//           .collection('snake_game_leadersboard')
-//           .doc(email)
-//           .set({
-//             user_name: userName,
-//             email,
-//             password,
-//             age: ageNum,
-//             score: 0,
-//           });
-//         Alert.alert('Success', 'Registered! Please log in.');
-//         navigation.navigate('Login');
-//       }
-//     } catch (error: any) {
-//       Alert.alert('Error', error.message || 'Registration failed');
-//     }
-//   };
-
-//   return (
-//     <View style={styles.container}>
-//       <Text style={styles.title}>Register</Text>
-//       <Text style={styles.label}>User Name</Text>
-//       <TextInput
-//         style={styles.input}
-//         placeholder="Enter your user name"
-//         value={userName}
-//         onChangeText={setUserName}
-//         autoCapitalize="none"
-//       />
-//       <Text style={styles.label}>Email</Text>
-//       <TextInput
-//         style={styles.input}
-//         placeholder="Enter your email"
-//         value={email}
-//         onChangeText={setEmail}
-//         keyboardType="email-address"
-//         autoCapitalize="none"
-//       />
-//       <Text style={styles.label}>Password</Text>
-//       <TextInput
-//         style={styles.input}
-//         placeholder="Enter your password"
-//         value={password}
-//         onChangeText={setPassword}
-//         secureTextEntry
-//       />
-//       <Text style={styles.label}>Age</Text>
-//       <TextInput
-//         style={styles.input}
-//         placeholder="Enter your age"
-//         value={age}
-//         onChangeText={setAge}
-//         keyboardType="numeric"
-//       />
-//       <TouchableOpacity style={styles.button} onPress={handleRegister}>
-//         <Text style={styles.buttonText}>Register</Text>
-//       </TouchableOpacity>
-//       <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-//         <Text style={styles.link}>Already have an account? Login</Text>
-//       </TouchableOpacity>
-//     </View>
-//   );
-// }
 function RegisterScreen({ navigation }: NativeStackScreenProps<RootStackParamList, 'Register'>) {
   const [userName, setUserName] = useState('');
   const [email, setEmail] = useState('');
@@ -254,35 +169,41 @@ function RegisterScreen({ navigation }: NativeStackScreenProps<RootStackParamLis
 
       if (!usersSnapshot.empty) {
         Alert.alert('Error', 'User name already exists');
-      } else {
-        // Default textSettings for all letters (A-Z and a-z)
-        const defaultTextSettings: { [key: string]: { fontSize: number; color: string; bold: boolean } } = {};
-        const letters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
-        letters.forEach((letter) => {
-          defaultTextSettings[letter] = {
-            fontSize: 16,
-            color: 'black',
-            bold: false,
-          };
+        return;
+      }
+
+      // Fetch default text settings from rb_text_settings/rbts1
+      const settingsDoc = await firestore()
+        .collection('rb_text_settings')
+        .doc('rbts1')
+        .get();
+
+      if (!settingsDoc.exists) {
+        Alert.alert('Error', 'Default text settings not found in Firestore');
+        return;
+      }
+
+      const defaultTextSettings = settingsDoc.data()?.textSettings;
+      if (!defaultTextSettings) {
+        Alert.alert('Error', 'Settings field missing in rbts1 document');
+        return;
+      }
+
+      await firestore()
+        .collection('snake_game_leadersboard')
+        .doc(email)
+        .set({
+          user_name: userName,
+          email,
+          password,
+          age: ageNum,
+          score: 0,
+          textSettings: defaultTextSettings, // Use fetched settings
+          textScore: "1.0",
         });
 
-        // const defaultTextScore: { [key: string]: { fontSize: number; color: string; bold: boolean } } = {};
-
-        await firestore()
-          .collection('snake_game_leadersboard')
-          .doc(email)
-          .set({
-            user_name: userName,
-            email,
-            password,
-            age: ageNum,
-            score: 0,
-            textSettings: defaultTextSettings, // Add default settings
-            textScore:"1.0"
-          });
-        Alert.alert('Success', 'Registered! Please log in.');
-        navigation.navigate('Login');
-      }
+      Alert.alert('Success', 'Registered! Please log in.');
+      navigation.navigate('Login');
     } catch (error: any) {
       Alert.alert('Error', error.message || 'Registration failed');
     }

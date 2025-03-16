@@ -44,9 +44,8 @@ export default function R1Scanned({ navigation, route }) {
     return words.map((word, wordIndex) => (
       <Text key={wordIndex} style={styles.word}>
         {word.split('').map((char, charIndex) => {
-          const lowerChar = char.toLowerCase();
-          const settings = letterSettings[lowerChar] || {
-            fontSize: 16, // Match default from registration
+          const settings = letterSettings[char] || {
+            fontSize: 16,
             color: 'black',
             bold: false,
           };
