@@ -1,7 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, Alert } from 'react-native';
 import questionsData from '../data/Reading_Activity.json'; // Adjust path as needed
-import storage from '@react-native-firebase/storage'; // Import your Firebase config
+import storage from '@react-native-firebase/storage';
+import firestore from '@react-native-firebase/firestore';
+import { AppContext } from '../App.tsx';
 
 export default function ReadingChallenge({ navigation }) {
   const [currentLevel, setCurrentLevel] = useState(1);
@@ -11,6 +13,8 @@ export default function ReadingChallenge({ navigation }) {
   const [gameState, setGameState] = useState('playing');
   const [imageUrl, setImageUrl] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const { loggedInUser } = useContext(AppContext);
+
   const levelStructure = {
     1: ['1-1', '1-2', '1-3', '1-4', '1-5'],
     2: ['2-1', '2-2', '2-3', '2-4'],
@@ -46,23 +50,33 @@ export default function ReadingChallenge({ navigation }) {
     fetchImage();
   }, [currentQuestions, currentQuestionIndex]);
 
+  // Save score to Firestore when gameState changes to 'results'
+  useEffect(() => {
+    if (gameState === 'results') {
+      const totalQuestions = currentQuestions.length;
+      saveScoreToFirestore(currentLevel, score, totalQuestions);
+    }
+  }, [gameState, currentLevel, score, currentQuestions]); // Dependencies include all relevant state
+
   const loadLevelQuestions = () => {
     setIsLoading(true);
     const sets = levelStructure[currentLevel];
     console.log('Loading sets for level', currentLevel, ':', sets);
-    const selectedQuestions = sets.map((set) => {
-      const setQuestions = questionsData.filter(
-        (q) => q.level === currentLevel && q['q-set'] === set
-      );
-      console.log(`Found ${setQuestions.length} questions for set ${set}`);
-      if (setQuestions.length === 0) {
-        console.log(`Warning: No questions for set ${set}`);
-        return null;
-      }
-      const randomQuestion = setQuestions[Math.floor(Math.random() * setQuestions.length)];
-      console.log('Picked question:', randomQuestion);
-      return randomQuestion;
-    }).filter(q => q !== null);
+    const selectedQuestions = sets
+      .map((set) => {
+        const setQuestions = questionsData.filter(
+          (q) => q.level === currentLevel && q['q-set'] === set
+        );
+        console.log(`Found ${setQuestions.length} questions for set ${set}`);
+        if (setQuestions.length === 0) {
+          console.log(`Warning: No questions for set ${set}`);
+          return null;
+        }
+        const randomQuestion = setQuestions[Math.floor(Math.random() * setQuestions.length)];
+        console.log('Picked question:', randomQuestion);
+        return randomQuestion;
+      })
+      .filter((q) => q !== null);
     console.log('Final questions array:', selectedQuestions);
     setCurrentQuestions(selectedQuestions);
     setCurrentQuestionIndex(0);
@@ -74,8 +88,7 @@ export default function ReadingChallenge({ navigation }) {
 
   const renderWord = (word, fontSize, space, hLetters, color) => {
     if (!word) return <Text>Invalid word</Text>;
-    // Normalize hLetters to lowercase for consistent comparison
-    const normalizedHLetters = hLetters.map(letter => letter.toLowerCase());
+    const normalizedHLetters = hLetters.map((letter) => letter.toLowerCase());
     console.log('Rendering word:', word, 'hLetters:', normalizedHLetters, 'color:', color);
     return word.split('').map((char, index) => {
       const isHighlighted = normalizedHLetters.includes(char.toLowerCase());
@@ -107,6 +120,27 @@ export default function ReadingChallenge({ navigation }) {
     }
   };
 
+  const saveScoreToFirestore = async (level, score, totalQuestions) => {
+    if (!loggedInUser) {
+      console.log('No logged-in user, skipping Firestore update');
+      return;
+    }
+    const textScore = `${level}.${score}`;
+    try {
+      await firestore()
+        .collection('snake_game_leadersboard')
+        .doc(loggedInUser)
+        .set(
+          { textScore }, // Save as "level.score" (e.g., "1.3", "2.4")
+          { merge: true } // Merge to avoid overwriting other fields
+        );
+      console.log(`Saved textScore: ${textScore} for user: ${loggedInUser}`);
+    } catch (error) {
+      console.error('Error saving textScore:', error);
+      Alert.alert('Error', 'Failed to save your score');
+    }
+  };
+
   const handleNextLevel = () => {
     if (currentLevel < 5) {
       setCurrentLevel(currentLevel + 1);
@@ -131,6 +165,7 @@ export default function ReadingChallenge({ navigation }) {
   if (gameState === 'results') {
     const totalQuestions = currentQuestions.length;
     const passed = score === totalQuestions;
+
     return (
       <View style={styles.container}>
         <Text style={styles.header}>Level {currentLevel} Results</Text>
@@ -174,7 +209,9 @@ export default function ReadingChallenge({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>Level {currentLevel} - Question {currentQuestionIndex + 1}</Text>
+      <Text style={styles.header}>
+        Level {currentLevel} - Question {currentQuestionIndex + 1}
+      </Text>
       {imageUrl ? (
         <Image
           source={{ uri: imageUrl }}
@@ -225,7 +262,7 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   answerButton: {
-    backgroundColor: '#bcbcbc', // Changed from #85fe78 to #bcbcbc
+    backgroundColor: '#bcbcbc',
     padding: 15,
     borderRadius: 10,
     minWidth: 120,
